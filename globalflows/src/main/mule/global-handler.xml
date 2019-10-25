@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="d821b518-12fa-4b6e-893f-dbbdf7a597f8" file="property-file.yaml" />
+	<error-handler name="global-error-handler" doc:id="433a847e-ae4d-4122-9473-4fed5d8fa95b" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="61271ff3-9d84-4c5e-8166-49a1be2eafcc" type="ANY">
+			<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"header":{
+		"CorrelationID": vars.header.correlationid,
+		"ProjectName": vars.header.projectname,
+		"ModuleName": vars.header.modulename
+	},
+	"error":{
+		"correlationID": vars.correlationId default "None",
+		"TimeStamp": now() as String,
+		"ErrorNamespace": error.errorType.namespace,
+		"Type": error.errorType.identifier,
+		"Message": error.errorMessage,
+		"Description": error.description,
+		"Details": error.detailedDescription,
+		"Cause": error.cause.message,
+		"StackTrace": error.cause.stackTrace		
+	}
+}]' doc:name="Transform Error Message" doc:id="12075b7b-9f14-4037-b8a7-d260c23c34b7" />
+			<choice doc:name="Choice" doc:id="fb4203f8-a51c-4bc5-877a-5754e5026c5f" >
+				<when expression='#[p("property.sendToFile") == "true"]'>
+					<logger level="INFO" doc:name="Logger Info" doc:id="ba72c9a7-2718-489b-b95e-3ca532d8fcf7" message='#["Writing File to " ++ p("property.filepath")]'/>
+					<try doc:name="Try" doc:id="09468b6f-b81c-4eb4-aa42-c975ce005a3d" >
+						<file:write doc:name="Write" doc:id="2bdebb0c-019b-4051-aff5-0f080c30398d" path='#[p("property.filepath") ++ (payload.error.ErrorNamespace as String) ++ "/" ++ (vars.header.correlationid as String) ++ ".log"]' mode="APPEND" />
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6a24100b-69eb-4fe6-ac8c-898f4106522c" >
+								<logger level="ERROR" doc:name="Logger File Error" doc:id="27dc360e-4f3d-4ec1-926f-3b5a240e0eee" message='#["Error Writing on File" ++ (error.errorType.identifier as String)]'/>
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</when>
+				<otherwise>
+					<logger level="INFO" doc:name="Logger" doc:id="5feb716d-5dff-4fd4-8089-0bdb7a839ca1" />
+				</otherwise>
+			</choice>
+		</on-error-propagate>
+	</error-handler>
+</mule>

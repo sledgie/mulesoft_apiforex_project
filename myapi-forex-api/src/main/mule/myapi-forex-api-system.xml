@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="currencyconverter-backend" doc:id="ff165cac-a591-42e3-923b-3dbf7a1caf7d" >
+		<choice doc:name="Choice" doc:id="e073d956-c355-493b-816f-05e20946d957" >
+			<when expression="#[sizeOf(message.attributes.uriParams) == 0]">
+				<until-successful maxRetries="3" doc:name="Until Successful" doc:id="4911bc7d-ec50-4b86-8e4c-033110555a36" millisBetweenRetries="5000">
+			<logger level="INFO" doc:name="Log Start" doc:id="d300596c-8f07-4ba6-b7e5-b9bc42371515" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-forex-api",
+	"version": "V1",	
+	"logstart": vars.getTimeStamp as String,
+	"message": "Entering Backend API"
+}]'/>
+			<http:request method="GET" doc:name="Request" doc:id="2a252bf7-cfff-48d4-b84f-133c338cf623" url='#[p("properties.backend.uri")]'>
+				<http:query-params><![CDATA[#[output application/java
+---
+{
+	"symbols" : message.attributes.queryParams["targetCcy"],
+	"base" : message.attributes.queryParams["baseCcy"]
+}]]]></http:query-params>
+			</http:request>
+					<logger level="INFO" doc:name="Log End" doc:id="a0c7ce2c-c9fd-40b6-9dc8-9fd33a462387" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-forex-api",
+	"version": "V1",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime,
+	"result": "Success"
+}]'/>
+		</until-successful>
+			</when>
+			<otherwise >
+				<until-successful maxRetries="3" doc:name="Until Successful" doc:id="9f390725-2375-4ff6-b7cb-cb3184f54228" millisBetweenRetries="5000">
+					<logger level="INFO" doc:name="Log Start" doc:id="e879c96a-4fd9-4352-8d1f-41d0df47b38f" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-forex-api",
+	"version": "V1",	
+	"logstart": vars.getTimeStamp as String,
+	"message": "Entering Backend API"
+}]'/>
+					<http:request method="GET" doc:name="Request" doc:id="e29f1a4a-7e47-4a70-84ea-95a8bd64bed6" url='#[p("properties.backend.uri")]'>
+						<http:query-params><![CDATA[#[output application/java
+---
+{
+	"symbols" : message.attributes.uriParams['target'],
+	"base" : message.attributes.uriParams['base']
+}]]]></http:query-params>
+					</http:request>
+					<logger level="INFO" doc:name="Log End" doc:id="b1488b98-d403-42e1-a9dd-cee7493ff31a" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-forex-api",
+	"version": "V1",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime,
+	"result": "Success"
+}]'/>
+				</until-successful>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

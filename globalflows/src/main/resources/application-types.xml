@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="logging-attributes" format="json">
+      <types:shape format="weave" example="examples/logger-attributes.json"><![CDATA[%dw 2.0
+
+type logging_attributes = {|
+  projectname: String, 
+  flowname: String, 
+  correlationid: String, 
+  datetimestamp: String, 
+  message: String, 
+  logtofile: String, 
+  logtype: String
+|} {"example": "{\"projectname\":\"Some Project\",\"flowname\":\"Some Flow\",\"correlationid\":\"Some ID\",\"datetimestamp\":\"2019-10-10\",\"message\":\"A message\",\"logtofile\":\"false\",\"logtype\":\"INFO\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="payload-attributes" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="http-error" format="json">
+      <types:shape format="weave" example="examples/http-error-example.json"><![CDATA[%dw 2.0
+
+type http_error = {|
+  error: {|
+    ErrorNamespace: String, 
+    Type: String, 
+    Message: {|
+      inboundAttachmentNames: Array<Any>, 
+      exceptionPayload: Null, 
+      inboundPropertyNames: Array<Any>, 
+      outboundAttachmentNames: Array<Any>, 
+      payload: {| error: String |}, 
+      outboundPropertyNames: Array<Any>, 
+      attributes: {|
+        headers: {|
+          date: String, 
+          "content-type": String, 
+          "content-length": String, 
+          connection: String, 
+          "access-control-allow-origin": String, 
+          "access-control-allow-credentials": String, 
+          "access-control-allow-methods": String, 
+          "cf-cache-status": String, 
+          "expect-ct": String, 
+          server: String, 
+          "cf-ray": String
+        |}, 
+        reasonPhrase: String, 
+        statusCode: Number {"typeId": "int"}
+      |}
+    |}, 
+    Description: String, 
+    Details: String, 
+    StackTrace: Array<Any>
+  |}
+|} {"example": "{\"error\":{\"ErrorNamespace\":\"HTTP\",\"Type\":\"BAD_REQUEST\",\"Message\":{\"inboundAttachmentNames\":[],\"exceptionPayload\":null,\"inboundPropertyNames\":[],\"outboundAttachmentNames\":[],\"payload\":{\"error\":\"time data 'latestx' does not match format '%Y-%m-%d'\"},\"outboundPropertyNames\":[],\"attributes\":{\"headers\":{\"date\":\"Thu, 24 Oct 2019 15:54:02 GMT\",\"content-type\":\"application\/json\",\"content-length\":\"64\",\"connection\":\"keep-alive\",\"access-control-allow-origin\":\"*\",\"access-control-allow-credentials\":\"true\",\"access-control-allow-methods\":\"GET\",\"cf-cache-status\":\"MISS\",\"expect-ct\":\"max-age=604800, report-uri=\\\"https:\/\/report-uri.cloudflare.com\/cdn-cgi\/beacon\/expect-ct\\\"\",\"server\":\"cloudflare\",\"cf-ray\":\"52ad2082bc063058-YYZ\"},\"reasonPhrase\":\"Bad Request\",\"statusCode\":400}},\"Description\":\"HTTP GET on resource 'http:\/\/api.ratesapi.io\/api\/latestx' failed: bad request (400).\",\"Details\":\"HTTP GET on resource 'http:\/\/api.ratesapi.io\/api\/latestx' failed: bad request (400).\",\"StackTrace\":[]}}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="correlationId" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="header-error" format="json">
+      <types:shape format="weave" example="examples/header-error.json"><![CDATA[%dw 2.0
+
+type header_error = {|
+  correlationid: String, 
+  projectname: String, 
+  modulename: String
+|} {"example": "{\"correlationid\":\"String\",\"projectname\":\"String\",\"modulename\":\"String\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#e2340d12-4f20-4c19-9c34-bda0e2da3109">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="payload-attributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#e3a73052-47c0-40d0-9969-21462ec129da">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="logging-attributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#f9b3ee1c-977c-4ad3-9208-6e8405eed252">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="http-error"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#433a847e-ae4d-4122-9473-4fed5d8fa95b">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:variables>
+          <types:variable name="header" type="header-error"/>
+        </types:variables>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

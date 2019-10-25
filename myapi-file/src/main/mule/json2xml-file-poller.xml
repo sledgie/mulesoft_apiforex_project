@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="af5fac2a-bee5-4300-b65a-d9111753e4f1" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:factory-configuration brokerUrl="tcp://192.168.7.242:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<flow name="json2xml-file-pollerFlow" doc:id="8b9f79fd-791c-453f-a60d-ee63bf6884db" >
+		<file:listener doc:name="Poll New File" doc:id="78d659cc-1d70-4679-985e-ab02c5f89091" directory="${properties.file.parentpath}">
+			<scheduling-strategy >
+				<fixed-frequency timeUnit="SECONDS" frequency="${properties.file.pollfrequency}"/>
+			</scheduling-strategy>
+		</file:listener>
+		<set-variable value="#[now()]" doc:name="Current TimeStamp" doc:id="129eb112-f7c1-46aa-8251-73b73f226978" variableName="getTimeStamp"/>
+		<logger level="INFO" doc:name="Log Start" doc:id="8b93d5e5-228d-475d-9ce4-19c31a49dd32" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"flowname": "json2xml-file-pollerFlow",	
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<ee:transform doc:name="Set Header" doc:id="3d196827-30ab-4f16-acf2-36c30de6e7ef">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "json2xml-file-poller"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="JSON to XML" doc:id="47db2495-4d03-48fe-8f9f-72c56f3a7e9f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	root: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:move doc:name="Move" doc:id="a575d93b-89ee-47f9-b407-b926cd04cb7d" sourcePath='#[p("properties.file.parentpath") ++ (attributes.fileName as String)]' targetPath='#[p("properties.file.movepath")]'/>
+		<jms:publish doc:name="Publish XML Message" doc:id="d16bd4dc-8984-4b3c-b386-5eb2e511a983" config-ref="JMS_Config" destination="vm.xml.outbound" />
+		<logger level="INFO" doc:name="Log End" doc:id="ce82f53a-7e88-416e-8911-639c9b8e1a4f" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"endpoint": "json2xml-file-pollerFlow",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+</mule>

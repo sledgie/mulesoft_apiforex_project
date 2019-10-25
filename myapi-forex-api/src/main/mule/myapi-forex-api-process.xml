@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="payload-converter" doc:id="06970b33-0bd3-4cf1-955c-aef0614fb338" >
+		<choice doc:name="Choice" doc:id="217f9e6e-f54b-4665-8fdf-6ea0f2f3403e">
+			<when expression='#[vars.OutputToXML["output"] == "xml"]'>
+				<ee:transform doc:name="Transform Message" doc:id="344eb0a4-162d-4aaa-87c9-3b1138aee890">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/xml skipNullOn="everywhere"
+---
+{
+	root: payload
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='#[vars.OutputToXML["output"] == "json"]'>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="7b50074d-1e3b-4f6b-8098-d9b0ef7088d3" />
+
+				
+			</when>
+			<otherwise>
+				<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": "Invalid output type entered"
+}]' doc:name="Set Payload" doc:id="6ab8910a-77c1-41a1-b9e8-734f1f2b696c" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<flow name="myapi-forex-api-processFlow" doc:id="5c034254-4edc-4682-b39b-043e5d866207" >
+		<ee:transform doc:name="Transform Message" doc:id="01d48ee7-993c-4622-98ec-6a02ff94b2db" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="OutputToXML" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"output": if(lower(message.attributes.uriParams["outputtype"]) == "xml" or lower(message.attributes.queryParams["outputtype"]) == "xml") "xml" else "json"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="System-Backend" doc:id="b8d387c1-3627-4a45-954c-90220aeb3e12" name="currencyconverter-backend"/>
+		<ee:transform doc:name="Update Output" doc:id="af7208a4-1dbd-4475-a574-88767d04c761" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Convert To XML" doc:id="89e8b2a8-4251-46e2-abb6-a9f480e368ca" name="payload-converter" />
+	</flow>
+	<flow name="myapi-forex-api-get-baseCcy-flow" doc:id="692c807b-5649-43f2-8842-88c73825e17d" >
+		<flow-ref doc:name="System-Backend" doc:id="4e8a5262-9d24-4aa4-a957-eb32669285aa" name="currencyconverter-backend"/>
+		<ee:transform doc:name="Transform Output" doc:id="63775a71-1a81-47db-b814-8e6126d06331" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="myapi-forex-api-get-base-target" doc:id="a09f27d5-aeae-4ca2-9e23-6146a9152988" >
+		<flow-ref doc:name="System-Backend" doc:id="dbaa6f8a-827d-4031-b1dd-ab218c981e46" name="currencyconverter-backend"/>
+		<ee:transform doc:name="Transform Output" doc:id="71971e32-39da-44af-8394-b73303e1c6eb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="myapi-forex-api-get-base-outputtype" doc:id="e6564ff0-06d5-462d-b517-5aacb56bf2a6" >
+		<ee:transform doc:name="Transform Message" doc:id="5c62ea57-666b-48cd-b61f-3064cfa177b3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="OutputToXML" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"output": if(lower(message.attributes.uriParams["outputtype"]) == "xml") "xml" else if (lower(message.attributes.uriParams["outputtype"]) == "json") "json" else message.attributes.uriParams["outputtype"]
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="System-Backend" doc:id="b36ecb96-8114-476b-8173-8d427034c890" name="currencyconverter-backend"/>
+		<ee:transform doc:name="Transform Output" doc:id="a9166c66-ae47-4757-8f43-359b25ca7c3d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Convert To XML" doc:id="d392b5b4-8104-483e-9c6a-299340af8c94" name="payload-converter"/>
+	</flow>
+	<flow name="myapi-forex-api-get-base-target-outputtype" doc:id="6b7e679e-c0af-44b5-bc83-b292307a842c" >
+		<ee:transform doc:name="Transform Message" doc:id="e06be520-a03c-496d-9972-1c6ac78614d3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="OutputToXML" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"output": if(lower(message.attributes.uriParams["outputtype"]) == "xml") "xml" else if (lower(message.attributes.uriParams["outputtype"]) == "json") "json" else message.attributes.uriParams["outputtype"]
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="System-Backend" doc:id="f05a3ed9-2461-4252-8136-ff2207b84269" name="currencyconverter-backend"/>
+		<ee:transform doc:name="Transform Output" doc:id="1c7a9aa0-f494-42eb-8df5-1f3c7eb81b18" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Convert To XML" doc:id="eff22ee1-f8da-4905-8ae2-fedf4e88bf3c" name="payload-converter"/>
+	</flow>
+</mule>

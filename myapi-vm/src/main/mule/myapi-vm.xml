@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="7f991738-2725-42c3-9efb-d6e189d0ba74" file="dev-properties.yaml" />
+	<import doc:name="Import" doc:id="1c16fd88-75d2-483e-8a05-b67610ce5c2e" file="global-handler.xml" />
+	<configuration doc:name="Configuration" doc:id="6f8ed4b5-4b95-44c1-be85-4fae05c8484e" defaultErrorHandler-ref="global-error-handler" />
+	<flow name="myapi-vmFlow" doc:id="e28146fd-695d-4f5d-8042-1ab3ac7affbd" >
+		<jms:listener doc:name="Listener" doc:id="064a1dbd-e5a8-401c-9d0d-f0aa361eecb7" destination="vm.xml.outbound" ackMode="AUTO" inboundContentType="application/xml" config-ref="sharedresource_JMS">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<ee:transform doc:name="Set Header" doc:id="faa551c1-cbf9-4592-afe3-a431d2edb426">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "myapi-vmFlow"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1029af6e-deab-4f94-9db0-bfca1679fa7e" message="#[payload]" />
+		<ee:transform doc:name="Convert To FlatFile Format" doc:id="b297b2ba-c41d-4a69-80fe-2986303e0620" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.root pluck(value, key, index) -> {
+		"Base": if(index > 1) payload.root.base else null,
+		"Target":if(index > 1) key else null, 
+		"Value": if(index > 1) (value) else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform To CSV" doc:id="2f08149b-5494-4040-8aea-f9cef595d9a2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv headerLineNumber = 0 , header = true
+---
+payload filter ($.Base != null) map (payload01, indexOfPayload01)->{
+	Base: payload01.Base,
+	Target: payload01.Target,
+	Value: payload01.Value
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#["CurrencyRecords_" ++ (now() as String{format: "yyyyMMddhhmmss"}) ++ ".csv"]' doc:name="Set FileName" doc:id="e01eba32-648f-4545-837f-74ef23bd858f" variableName="fileName" />
+		<file:write doc:name="Write" doc:id="a3c1cde9-35a3-427f-a9ff-484f1e5d2e6b" path='#[(p("properties.file.archivepath")) ++ (vars.fileName as String)]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="bc2e299e-997c-4149-9e43-4e2d57b42612" message="#[payload]"/>
+	</flow>
+</mule>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="project properties" doc:id="87f78d5d-db1c-41c7-ab1a-ef85957a9efc" file="dev-properties.yaml" />
+	<apikit:config outboundHeadersMapName="outboundHeadersMapName" httpStatusVarName="httpStatus" doc:name="Router" doc:id="6b71023f-b65d-48f3-86b9-96da692d27b7" name="Router" api="api/currencyconverter.raml" />
+	<import doc:name="Import" doc:id="ba3a2f7c-715b-4811-8960-df613cb87732" file="global-handler.xml" />
+	<configuration doc:name="Configuration" doc:id="941c63d2-6fe2-465d-872f-dd2ffb6853b0" defaultErrorHandler-ref="global-error-handler" />
+	<flow name="myapi-proxy-api-queryParams" doc:id="3b270668-7726-4c75-bb2f-26a6801a9a06" >
+		<http:listener doc:name="Listener" doc:id="7d604e9f-9cb3-4e15-9635-77049b7a4daa" config-ref="shared_resource_HTTP" path="/prc-api/forex"/>
+		<set-variable value="#[now()]" doc:name="Get TimeStamp" doc:id="f332b380-54b0-405f-ab98-de1f14b8740f" variableName="getTimeStamp" />
+		<ee:transform doc:name="Set Header" doc:id="eb35ca7e-506a-4c8b-9820-b3cd8b1df2ee">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion:currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="3e3d9bba-1a4a-498e-a601-3a13b4e0b520" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": p("properties.projectname"),
+	"version": p("properties.version"),
+	"endpoint": "/prc-api/forexData",
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<http:request method="GET" doc:name="Request" doc:id="b17f9412-ab6a-4b13-be46-e7e421c27c3d" url="http://localhost:8081/api/currencyconversion">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	baseCcy : attributes.queryParams["baseCcy"],
+	targetCcy : attributes.queryParams["targetCcy"]
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="End Log" doc:id="433eb8ba-f80a-4b4e-becf-142b588b9214" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-proxy-api",
+	"version": "V1",
+	"endpoint": "/prc-api/forex",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]' />
+	</flow>
+	<flow name="myapi-proxy-api-uriParams" doc:id="b887c9d6-6397-46c4-9ea4-969675c3bddc" >
+		<http:listener doc:name="Listener" doc:id="38ddce52-f50e-41e9-814e-283165019c40" config-ref="shared_resource_HTTP" path="/prc-api/forexData/baseCcy/{base}/targetCcy/{target}"/>
+		<set-variable value="#[now()]" doc:name="Get TimeStamp" doc:id="90b363f9-1a9f-4ea7-b080-11f01ca9bf9f" variableName="getTimeStamp"/>
+		<ee:transform doc:name="Set Header" doc:id="92ed3bb1-2b49-4579-bade-9eeb0f0a5e71">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion:currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="c030ea30-52af-4c7f-bfa2-3860fb92da28" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-proxy-api",
+	"version": "V1",
+	"endpoint": "/prc-api/forexData",	
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<http:request method="GET" doc:name="Request" doc:id="472d8a74-e09d-464f-ac6a-370ba086c853" url="http://localhost:8081/api/currencyconversion/baseCcy/{base}/targetCcy/{target}/outputtype/{outputtype}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	outputtype : "json",
+	base : attributes.uriParams["base"],
+	target : attributes.uriParams["target"]
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="End Log" doc:id="2bcc3e53-0fec-4859-8130-de73078d1e34" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-proxy-api",
+	"version": "V1",
+	"endpoint": "/prc-api/forexData/baseCcy/{base}/targetCcy/{target}",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+</mule>

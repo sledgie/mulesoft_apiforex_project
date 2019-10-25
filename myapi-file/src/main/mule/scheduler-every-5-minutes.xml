@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="22ab4973-95ca-439d-b178-25b6a21aa3a5" file="dev-properties.yaml" />
+	<import doc:name="Import Global Handler" doc:id="e7f4113d-3e05-464c-9f5b-52bee56f3ebc" file="global-handler.xml" />
+	<configuration doc:name="Configuration" doc:id="bcc8ca56-e222-4a4e-b3ca-9a436709743b" defaultErrorHandler-ref="global-error-handler" />
+	<flow name="scheduler-every-5-minutes" doc:id="9d8e6614-f77d-49e0-9ef7-4f96a365f2d3" >
+		<scheduler doc:name="Every 5 Minutes" doc:id="b49a6c5b-7c9f-45d9-b859-6074f367f37d" >
+			<scheduling-strategy >
+				<cron expression="${properties.scheduler.cron5minutes}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[now()]" doc:name="Current TimeStamp" doc:id="f1280a2f-a9df-4e3c-8d27-13e31a82b1b1" variableName="getTimeStamp" />
+		<ee:transform doc:name="Set Header" doc:id="57ca716c-67d4-4315-9b4b-f3e65b9e7386" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="header" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "scheduler-every-5-minutes"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Start" doc:id="f80851cb-a52d-46c2-81e1-dd73857bf399" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"flowname": "scheduler-every-5-minutes",	
+	"logstart": vars.getTimeStamp as String
+}]' />
+		<http:request method="GET" doc:name="Request" doc:id="b83afcc0-8aa9-4e31-ae2d-19ac25ce2f7e" url='#[p("properties.http.request-api-uri")]'/>
+		<ee:transform doc:name="Transform Payload" doc:id="0615c92d-5c9a-41c3-bca6-ec108a63be8d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#["CurrencyRecords_" ++ (now() as String{format: "yyyyMMddhhmmss"}) ++ ".json"]' doc:name="Set FileName" doc:id="a6d89f7b-f20a-4680-acac-63f210dad894" variableName="fileName"/>
+		<file:write doc:name="Write Payload" doc:id="b2b7dd95-2baf-4950-9dbf-9308bae673e9" path='#[(p("properties.file.parentpath")) ++ (vars.fileName as String)]' createParentDirectories="false"/>
+		<logger level="INFO" doc:name="Log End" doc:id="31e3e6cd-db21-4756-a257-6928c0608a31" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"flowname": "scheduler-every-5-minutes",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+</mule>

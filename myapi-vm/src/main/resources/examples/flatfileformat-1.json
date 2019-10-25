@@ -1,0 +1,13 @@
+
+	[
+		{
+			"Base": "EUR",
+			"Target": "CAD",
+			"Value": 8.253
+		},
+		{
+			"Base": "EUR",
+			"Target": "PHP",
+			"Value": 50.52
+		}
+	]

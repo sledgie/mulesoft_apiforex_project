@@ -1,0 +1,5 @@
+property:
+  sendToFile: "true"
+  filepath: "C:/Users/temp/errors/log/"
+  errortypeFile: "FileError/"
+  errortypeHttp: "HTTPError/"

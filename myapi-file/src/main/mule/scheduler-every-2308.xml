@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="scheduler-every-2308Flow" doc:id="ae30e22d-1a16-40a8-814b-4ba00a131f73" initialState="stopped">
+		<scheduler doc:name="Every 23-08 hrs" doc:id="3825ed29-5a1b-47bb-a4d2-0b1b2a448b74" >
+			<scheduling-strategy >
+				<cron expression="${properties.scheduler.cron1day}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[now()]" doc:name="Current TimeStamp" doc:id="c188f774-5c7c-4f24-9c51-3c0f5d5da50e" variableName="getTimeStamp" />
+		<logger level="INFO" doc:name="Log Start" doc:id="9adba77d-235e-4a32-8517-3aa971695d3e" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"flowname": "scheduler-every-2308",	
+	"logstart": vars.getTimeStamp as String
+}]' />
+		<ee:transform doc:name="Set Header" doc:id="22ec430b-e93a-4a87-8d51-59088d7c5ffa">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "scheduler-every-2308"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request ratesapi.io" doc:id="dbca279d-2b8d-4ff5-b68c-44e8e1234151" url="http://api.ratesapi.io/api/latest" />
+		<ee:transform doc:name="Transform Payload" doc:id="d2e908c3-4160-420a-8f9a-4cb0416e7faa">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	date: payload.date,
+	base: payload.base,	
+	GBP: payload.rates.GBP,
+	HKD: payload.rates.HKD,
+	IDR: payload.rates.IDR,
+	ILS: payload.rates.ILS,
+	DKK: payload.rates.DKK,
+	INR: payload.rates.INR,
+	CHF: payload.rates.CHF,
+	MXN: payload.rates.MXN,
+	CZK: payload.rates.CZK,
+	SGD: payload.rates.SGD,
+	THB: payload.rates.THB,
+	HRK: payload.rates.HRK,
+	MYR: payload.rates.MYR,
+	NOK: payload.rates.NOK,
+	CNY: payload.rates.CNY,
+	BGN: payload.rates.BGN,
+	PHP: payload.rates.PHP,
+	SEK: payload.rates.SEK,
+	PLN: payload.rates.PLN,
+	ZAR: payload.rates.ZAR,
+	CAD: payload.rates.CAD,
+	ISK: payload.rates.ISK,
+	BRL: payload.rates.BRL,
+	RON: payload.rates.RON,
+	NZD: payload.rates.NZD,
+	TRY: payload.rates.TRY,
+	JPY: payload.rates.JPY,
+	RUB: payload.rates.RUB,
+	KRW: payload.rates.KRW,
+	USD: payload.rates.USD,
+	HUF: payload.rates.HUF,
+	AUD: payload.rates.AUD
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#["CurrencyRecords_" ++ (now() as String{format: "yyyyMMddhhmmss"}) ++ ".json"]' doc:name="Set FileName" doc:id="89627131-2924-4126-98c8-efdfa6203732" variableName="fileName" />
+		<file:write doc:name="Write Payload" doc:id="266f6270-e2e3-4f1a-aa59-e68599bdc6dc" path='#[(p("properties.file.parentpath")) ++ (vars.fileName as String)]' />
+		<logger level="INFO" doc:name="End Log" doc:id="f273b08a-8ec5-42e2-a4f6-78d9132c66b9" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": "myapi-file",
+	"version": "V1",
+	"flowname": "scheduler-every-2308",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+</mule>

@@ -1,0 +1,181 @@
+#%RAML 1.0
+title: CurrencyConverter
+description: This API will convert currency from one currency to another
+version: 2.0
+protocols: [HTTP, HTTPS]
+mediaType: [application/json, application/xml]
+
+/forex:
+  description: The base endpoint. Default response is JSON
+  get:
+    queryParameters:
+      baseCcy:
+        description: The base currency
+        type: string
+        required: false
+        default: "EUR"
+      targetCcy:
+        description: The currency which it should be converted to
+        type: string
+        required: false
+      outputType:
+        description: either XML or JSON
+        type: string
+        required: false
+        default: "JSON"
+    responses:
+      200:
+        description: Success give all the conversion with respect to EUR currency        
+        body:
+          application/xml:
+            example: 
+              <?xml version="1.0" encoding="UTF-8"?>
+              <root>
+                <base>EUR</base>
+                <rates>
+                    <GBP>0.89045</GBP>
+                    <HKD>8.6099</HKD>
+                    <IDR>15531.39</IDR>
+                </rates>
+              </root>
+          application/json:
+            example: 
+              {
+              "base": "EUR",
+              "date": "2019-10-07",
+              "rates": {
+                "GBP": 0.89045,
+                "HKD": 8.6099,
+                "IDR": 15531.39
+              }
+            }
+/forex/baseCcy/{base}/targetCcy/{target}/outputtype/{outputtype}:
+  description: This endpoint uses a URI params to get the conversion from base param to target param
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                    "PHP": 51.25
+                 }
+              }    
+
+/forex/baseCcy/{base}:
+  uriParameters:
+    base:
+      type: string
+      required: true
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                  "PHP": 51.25,
+                  "USD": 1.05,
+                  "CAD": 2.25
+                }
+              }
+/forex/baseCcy/{base}/targetCcy/{target}:
+  uriParameters:
+    base:
+      type: string
+      required: true
+    target:
+      type: string
+      required: true
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                  "PHP": 51.25,
+                  "USD": 1.05,
+                  "CAD": 2.25
+                }
+              }
+/forex/baseCcy/{base}/outputtype/{outputtype}:
+  uriParameters:
+    base:
+      type: string
+      required: true
+    outputtype:
+      type: string
+      required: false
+      enum: ["JSON", "XML"]
+      default: "JSON"
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                  "PHP": 51.25,
+                  "USD": 1.05,
+                  "CAD": 2.25
+                }
+              }
+/forex/targetCcy/{target}:
+  uriParameters:
+    target:
+      type: string
+      required: true
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                  "PHP": 51.25,
+                  "USD": 1.05,
+                  "CAD": 2.25
+                }
+              }
+/forex/targetCcy/{target}/outputtype/{outputtype}:
+  uriParameters:
+    target:
+      type: string
+      required: true
+    outputtype:
+      type: string
+      required: false
+      enum: ["JSON", "XML"]
+      default: "JSON"
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "base": "EUR",
+                "date": "2019-10-07",
+                "rates": {
+                  "PHP": 51.25,
+                  "USD": 1.05,
+                  "CAD": 2.25
+                }
+              }
+        

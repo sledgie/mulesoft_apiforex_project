@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="httprequestattributes" format="java">
+      <types:shape format="java" element="org.mule.extension.http.api.HttpRequestAttributes"/>
+    </types:type>
+    <types:type name="cc-backend-param-payload" format="json">
+      <types:shape format="weave" example="examples/httprequestattributes_json.json"><![CDATA[%dw 2.0
+
+type cc_backend_param_payload = {| requestLink: String |} {"example": "{\"requestLink\":\"https:\/\/https\/\/api.ratesapi.io\/api\/latest?base=PHP&symbols=GBP\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="xmloutput" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="test" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="TransformedOuput" format="json">
+      <types:shape format="weave" example="examples/transformedoutput.json"><![CDATA[%dw 2.0
+
+type TransformedOuput = {|
+  date: String, 
+  base: String, 
+  GBP: Number {"typeId": "double"}, 
+  HKD: Number {"typeId": "double"}
+|} {"example": "{\"date\":\"2019-10-15\",\"base\":\"EUR\",\"GBP\":0.87058,\"HKD\":8.6351}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="apibackendoutput" format="json">
+      <types:shape format="weave" example="examples/apiforexoutput.json"><![CDATA[%dw 2.0
+
+type apibackendoutput = {|
+  date: String, 
+  base: String, 
+  rates: {|
+    GBP: Number {"typeId": "double"}, 
+    HKD: Number {"typeId": "double"}, 
+    IDR: Number {"typeId": "double"}, 
+    ILS: Number {"typeId": "double"}, 
+    DKK: Number {"typeId": "double"}, 
+    INR: Number {"typeId": "double"}, 
+    CHF: Number {"typeId": "double"}, 
+    MXN: Number {"typeId": "double"}, 
+    CZK: Number {"typeId": "double"}, 
+    SGD: Number {"typeId": "double"}, 
+    THB: Number {"typeId": "double"}, 
+    HRK: Number {"typeId": "double"}, 
+    MYR: Number {"typeId": "double"}, 
+    NOK: Number {"typeId": "double"}, 
+    CNY: Number {"typeId": "double"}, 
+    BGN: Number {"typeId": "double"}, 
+    PHP: Number {"typeId": "double"}, 
+    SEK: Number {"typeId": "double"}, 
+    PLN: Number {"typeId": "double"}, 
+    ZAR: Number {"typeId": "double"}, 
+    CAD: Number {"typeId": "double"}, 
+    ISK: Number {"typeId": "double"}, 
+    BRL: Number {"typeId": "double"}, 
+    RON: Number {"typeId": "double"}, 
+    NZD: Number {"typeId": "double"}, 
+    TRY: Number {"typeId": "double"}, 
+    JPY: Number {"typeId": "double"}, 
+    RUB: Number {"typeId": "double"}, 
+    KRW: Number {"typeId": "double"}, 
+    USD: Number {"typeId": "double"}, 
+    HUF: Number {"typeId": "double"}, 
+    AUD: Number {"typeId": "double"}
+  |}
+|} {"example": "{\"date\":\"2019-10-15\",\"base\":\"EUR\",\"rates\":{\"GBP\":0.87058,\"HKD\":8.6351,\"IDR\":15591.42,\"ILS\":3.8784,\"DKK\":7.4699,\"INR\":78.696,\"CHF\":1.0977,\"MXN\":21.1647,\"CZK\":25.82,\"SGD\":1.5088,\"THB\":33.434,\"HRK\":7.4353,\"MYR\":4.6125,\"NOK\":10.0653,\"CNY\":7.7943,\"BGN\":1.9558,\"PHP\":56.829,\"SEK\":10.8225,\"PLN\":4.2956,\"ZAR\":16.359,\"CAD\":1.4562,\"ISK\":138.3,\"BRL\":4.5467,\"RON\":4.7538,\"NZD\":1.7551,\"TRY\":6.4678,\"JPY\":119.23,\"RUB\":70.9456,\"KRW\":1305.51,\"USD\":1.1007,\"HUF\":332.38,\"AUD\":1.6293}}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#5c034254-4edc-4682-b39b-043e5d866207">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#ff165cac-a591-42e3-923b-3dbf7a1caf7d">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#692c807b-5649-43f2-8842-88c73825e17d">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#9b88794e-933c-4e4f-8610-3881b80b256a">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:variables>
+          <types:variable name="ToXML" type="xmloutput"/>
+        </types:variables>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#74b214c2-07a7-4beb-bd33-71c7e11a1fdb">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#a09f27d5-aeae-4ca2-9e23-6146a9152988">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#6b7e679e-c0af-44b5-bc83-b292307a842c">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:attributes type="httprequestattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#af7208a4-1dbd-4475-a574-88767d04c761">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="apibackendoutput"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="TransformedOuput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#a9166c66-ae47-4757-8f43-359b25ca7c3d">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="apibackendoutput"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#71971e32-39da-44af-8394-b73303e1c6eb">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="apibackendoutput"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#1c7a9aa0-f494-42eb-8df5-1f3c7eb81b18">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="apibackendoutput"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#06970b33-0bd3-4cf1-955c-aef0614fb338">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="TransformedOuput"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

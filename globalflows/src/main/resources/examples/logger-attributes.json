@@ -1,0 +1,9 @@
+{
+	"projectname": "Some Project",
+	"flowname": "Some Flow",
+	"correlationid": "Some ID",
+	"datetimestamp": "2019-10-10",
+	"message": "A message",
+	"logtofile": "false",
+	"logtype": "INFO"
+}

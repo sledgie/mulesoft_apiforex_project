@@ -1,0 +1,4 @@
+properties:
+  projectname: "myapi-vm" 
+  file:
+    archivepath: "C:/fileRepo/archived/"

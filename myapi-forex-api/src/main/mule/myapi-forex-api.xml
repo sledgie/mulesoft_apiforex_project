@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <apikit:config name="currencyconverter-config" api="currencyconverter.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" >
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/currencyconversion" action="get" flow-ref="get:\currencyconversion:currencyconverter-config" />
+			<apikit:flow-mapping resource="/currencyconversion/baseCcy/{base}/targetCcy/{target}" action="get" flow-ref="get:\currencyconversion\baseCcy\(base)\targetCcy\(target):currencyconverter-config" />
+			<apikit:flow-mapping resource="/currencyconversion/baseCcy/{base}" action="get" flow-ref="get:\currencyconversion\baseCcy\(base):currencyconverter-config" />
+			<apikit:flow-mapping resource="/currencyconversion/baseCcy/{base}/outputtype/{outputtype}" action="get" flow-ref="get:\currencyconversion\baseCcy\(base)\outputtype\(outputtype):currencyconverter-config" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	<import doc:name="Import" doc:id="d6fa6f51-6846-412d-8cf6-155a42d6f124" file="global-handler.xml" />
+	<configuration doc:name="Configuration" doc:id="c7ebf0d9-a6d3-47e9-8493-fd6f1692459c" defaultErrorHandler-ref="global-error-handler" />
+	<configuration-properties doc:name="Configuration properties" doc:id="7fc3fa16-0e7b-4a68-858a-875a6ce62824" file="dev.yaml" />
+	<flow name="myapi-forex-api-main">
+        <http:listener config-ref="shared_resource_HTTP" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="currencyconverter-config" />
+    </flow>
+    <flow name="get:\currencyconversion:currencyconverter-config">
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="a6f9d446-8796-4477-b375-8c57daf45be5" variableName="getTimeStamp"/>
+		<ee:transform doc:name="Set Header" doc:id="89889eb5-8f44-457e-ac3e-ce5b3f3c5b78">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion:currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="784ff1d0-e3a1-42c2-a48c-43249b43f08d" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion",	
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<flow-ref doc:name="Flow Reference" doc:id="4ab48a19-60b4-4cd9-a0f1-4e29101e218d" name="myapi-forex-api-processFlow"/>
+		<logger level="INFO" doc:name="End Log" doc:id="421abb6e-5c92-494f-a9d6-067536160160" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+    </flow>
+	<flow name="get:\currencyconversion\baseCcy\(base):currencyconverter-config" doc:id="36a18e43-40e1-4100-b786-a80cb8e6dbb5" >
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="e9ce3b2c-64f3-4ab9-9891-e0974bf55cee" variableName="getTimeStamp"/>
+		<ee:transform doc:name="Set Header" doc:id="0aef45c3-f7c4-4d07-bee4-669f52039295">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion\baseCcy\(base):currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="6c6cbeaf-cd43-47f1-9cf6-03eecacd3d96" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}",
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<flow-ref doc:name="Call api \base" doc:id="da044c52-8f9a-4509-b7dc-86efa7d39539" name="myapi-forex-api-get-baseCcy-flow"/>
+		<logger level="INFO" doc:name="End Log" doc:id="771e38f2-b7b7-426b-8431-04f7db3a549c" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+	<flow name="get:\currencyconversion\baseCcy\(base)\targetCcy\(target):currencyconverter-config">
+        <set-variable value="#[now()]" doc:name="Get Current Time" doc:id="450ee404-bcc9-432c-9bea-df9a75633d7e" variableName="getTimeStamp"/>
+		<ee:transform doc:name="Set Header" doc:id="7b98627d-697b-4c0a-8ab3-d63cd28b244c">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion\baseCcy\(base)\targetCcy\(target):currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="da69f99f-aa71-4836-a172-c77f12753d63" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}/outputtype/{outputtype}",
+	"logstart": vars.getTimeStamp as String
+}]'/>
+		<flow-ref doc:name="Call api \base\target" doc:id="78913581-fcd9-48a2-b778-b1a7e393a064" name="myapi-forex-api-get-base-target" />
+		<logger level="INFO" doc:name="End Log" doc:id="3fe662b0-6b27-45d6-b92f-828bbb3b25d5" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+    </flow>
+	<flow name="get:\currencyconversion\baseCcy\(base)\outputtype\(outputtype):currencyconverter-config" doc:id="52e8e8b6-f3a1-4757-99db-1938c1865ebd" >
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="4e8f4aba-d654-49e5-b835-3df19e383e86" variableName="getTimeStamp" />
+		<ee:transform doc:name="Set Header" doc:id="802dbf0b-029e-44b3-86b4-8148fea2e0d6">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion\baseCcy\(base)\outputtype\(outputtype):currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="7f9447f5-17be-42c3-bdd6-d3c0e10c4ee2" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"logstart": vars.getTimeStamp as String
+}]' />
+		<flow-ref doc:name="Call api \base\outputtype" doc:id="8a4048c6-ff9d-49f5-a35d-e67e7650e08c" name="myapi-forex-api-get-base-outputtype"/>
+		<logger level="INFO" doc:name="End Log" doc:id="e5c7c70c-b3b2-4719-80f8-8518db28af9b" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}/outputtype/{outputtype}",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+	<flow name="get:\currencyconversion\baseCcy\(base)\targetCcy\(target)\outputtype\(outputtype):currencyconverter-config" doc:id="1f416284-8e49-468e-880c-d6f8350a277c" >
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="8c3774ec-90aa-4798-ac36-105690e3824e" variableName="getTimeStamp" />
+		<ee:transform doc:name="Set Header" doc:id="1f59555b-976a-4d2a-a4de-ff01d3f06a2e">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "get:\currencyconversion\baseCcy\(base)\targetCcy\(target)outputtype\(outputtype):currencyconverter-config"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="1fc6f615-61c0-4a6f-9581-4f2b7fcb20e6" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}/targetCcy/{target}/outputtype/{outputtype}",
+	"logstart": vars.getTimeStamp as String
+}]' />
+		<flow-ref doc:name="Call api \base\target\outputtype" doc:id="d7360c8f-4c55-4246-8863-d2b0459acbdc" name="myapi-forex-api-get-base-target-outputtype"/>
+		<logger level="INFO" doc:name="End Log" doc:id="f4c5e650-3d84-482b-bb3e-00de7d79e203" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "/currencyconversion/baseCcy/{base}/targetCcy/{target}/outputtype/{outputtype}",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime
+}]'/>
+	</flow>
+</mule>

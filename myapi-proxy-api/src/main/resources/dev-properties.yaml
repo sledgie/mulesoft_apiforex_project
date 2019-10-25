@@ -1,0 +1,4 @@
+properties:
+  projectname: "myapi-proxy-api"
+  version: "V1"
+  description: "Proxy client of the service myapi-forex-api"

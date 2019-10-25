@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="5b5ae06b-a6cd-4e2b-a3cd-6048a80c6f43" >
+		<os:connection />
+	</os:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="af068264-960b-4233-aa63-1775e2a60548" config-ref="ObjectStore_Config" maxEntries="1000" entryTtl="60" expirationInterval="15"/>
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="5d99ec24-2061-426d-972d-6faa7f3e66b2" keyGenerationExpression="#[vars.cacheKey]" objectStore="Object_store">
+	</ee:object-store-caching-strategy>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a253c20e-89f9-42c4-b54c-1207164ced97" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="myapi-starterjobFlow" doc:id="74668582-af9d-430c-b617-539bfc5e310a" >
+		<http:listener doc:name="Cache Listener" doc:id="efa853de-1a82-44cf-8010-d19bfa1aa21d" config-ref="HTTP_Listener_config" path="/cache">
+		</http:listener>
+		<set-variable value="#[%dw 2.0
+output application/java
+---
+attributes.requestUri as String]" doc:name="Cache Key" doc:id="67836cac-9f2e-4c0d-a077-ebf7b0d357ee" variableName="cacheKey"/>
+		<logger level="INFO" doc:name="Logger" doc:id="fe043702-a480-4d5e-811b-77a2d31b2e03" message='#["Before Entering the Cache Scope"]'/>
+		<ee:cache doc:name="Cache Scope" doc:id="e9c60189-2606-425f-bc8b-bde79b46e00a" cachingStrategy-ref="Caching_Strategy">
+			<set-payload value='#["value" as String]' doc:name="Set Payload" doc:id="57a8b90f-397f-4764-892f-f2b086455cce" />
+			<logger level="INFO" doc:name="Logger" doc:id="2daf0a95-b38e-4c00-b321-858adeafc0b2" message='#["Fuck Cache"]'/>
+		</ee:cache>
+	</flow>
+</mule>

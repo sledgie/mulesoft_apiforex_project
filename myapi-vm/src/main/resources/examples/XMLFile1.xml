@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+  <date>2019-10-18</date>
+  <base>EUR</base>
+  <GBP>0.86435</GBP>
+  <HKD>8.7396</HKD>
+  <IDR>15773.15</IDR>
+  <ILS>3.9462</ILS>
+  <DKK>7.4702</DKK>
+  <INR>79.2735</INR>
+  <CHF>1.0996</CHF>
+  <MXN>21.3875</MXN>
+  <CZK>25.659</CZK>
+  <SGD>1.5214</SGD>
+  <THB>33.761</THB>
+  <HRK>7.4418</HRK>
+  <MYR>4.6654</MYR>
+  <NOK>10.2198</NOK>
+  <CNY>7.8941</CNY>
+  <BGN>1.9558</BGN>
+  <PHP>57.07</PHP>
+  <SEK>10.7742</SEK>
+  <PLN>4.2843</PLN>
+  <ZAR>16.4566</ZAR>
+  <CAD>1.4639</CAD>
+  <ISK>139.1</ISK>
+  <BRL>4.6363</BRL>
+  <RON>4.7565</RON>
+  <NZD>1.7488</NZD>
+  <TRY>6.4447</TRY>
+  <JPY>120.97</JPY>
+  <RUB>71.3066</RUB>
+  <KRW>1314.33</KRW>
+  <USD>1.1144</USD>
+  <HUF>330.62</HUF>
+  <AUD>1.6278</AUD>
+</root>

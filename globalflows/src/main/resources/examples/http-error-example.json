@@ -1,0 +1,46 @@
+{
+  "error": {
+    "ErrorNamespace": "HTTP",
+    "Type": "BAD_REQUEST",
+    "Message": {
+      "inboundAttachmentNames": [
+        
+      ],
+      "exceptionPayload": null,
+      "inboundPropertyNames": [
+        
+      ],
+      "outboundAttachmentNames": [
+        
+      ],
+      "payload": {
+        "error": "time data 'latestx' does not match format '%Y-%m-%d'"
+      },
+      "outboundPropertyNames": [
+        
+      ],
+      "attributes": {
+        "headers": {
+          "date": "Thu, 24 Oct 2019 15:54:02 GMT",
+          "content-type": "application/json",
+          "content-length": "64",
+          "connection": "keep-alive",
+          "access-control-allow-origin": "*",
+          "access-control-allow-credentials": "true",
+          "access-control-allow-methods": "GET",
+          "cf-cache-status": "MISS",
+          "expect-ct": "max-age=604800, report-uri=\"https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct\"",
+          "server": "cloudflare",
+          "cf-ray": "52ad2082bc063058-YYZ"
+        },
+        "reasonPhrase": "Bad Request",
+        "statusCode": 400
+      }
+    },
+    "Description": "HTTP GET on resource 'http://api.ratesapi.io/api/latestx' failed: bad request (400).",
+    "Details": "HTTP GET on resource 'http://api.ratesapi.io/api/latestx' failed: bad request (400).",
+    "StackTrace": [
+      
+    ]
+  }
+}
