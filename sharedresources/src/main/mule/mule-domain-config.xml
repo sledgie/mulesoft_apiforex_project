@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <domain:mule-domain
+        xmlns:os="http://www.mulesoft.org/schema/mule/os"
         xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
         xmlns:http="http://www.mulesoft.org/schema/mule/http"
         xmlns="http://www.mulesoft.org/schema/mule/core"
-        xmlns:domain="http://www.mulesoft.org/schema/mule/ee/domain"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+        xmlns:domain="http://www.mulesoft.org/schema/mule/ee/domain" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
                http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
                http://www.mulesoft.org/schema/mule/ee/domain http://www.mulesoft.org/schema/mule/ee/domain/current/mule-domain-ee.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<http:listener-config name="shared_resource_HTTP" doc:name="HTTP Listener config" doc:id="331a9f7f-8a46-4f84-8a9d-c643831306ef" >
-		<http:listener-connection host="0.0.0.0" port="8081" connectionIdleTimeout="180000"/>
+		<http:listener-connection host="0.0.0.0" port="${http.port}" connectionIdleTimeout="180000"/>
 	</http:listener-config>
 	<jms:config name="sharedresource_JMS" doc:name="JMS Config" doc:id="ef2ca760-16ba-4fcb-b520-a1e3663851f9" >
 		<jms:active-mq-connection username="admin" password="admin" >
 			<jms:factory-configuration brokerUrl="tcp://192.168.7.242:61616" />
 		</jms:active-mq-connection>
 	</jms:config>
+	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="8283a53d-dd0f-45d0-afc4-7f0477877706" >
+		<os:connection />
+	</os:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="8cb57058-38ef-46f9-a750-1792b558aade" persistent="false" maxEntries="1000" entryTtl="1" entryTtlUnit="DAYS" config-ref="ObjectStore_Config" expirationIntervalUnit="DAYS"/>
+	<configuration-properties doc:name="Configuration properties" doc:id="5cacce8f-6588-4ce7-a5df-9bf9c568467e" file="config.yaml" />
 
 
     <!-- configure here resource to be shared within the domain -->

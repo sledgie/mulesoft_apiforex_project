@@ -4,7 +4,7 @@ properties:
     cron5minutes: "0 */2 * ? * *"
     cron1day: "0 8 23 ? * * *"
   http:
-    request-api-uri: "http://api.ratesapi.io/api/latest"
+    request-api-uri: "localhost:8081/api/currencyconversion/"
   file:
     parentpath: "C:/fileRepo/output/1/"
     movepath: "C:/fileRepo/process/"

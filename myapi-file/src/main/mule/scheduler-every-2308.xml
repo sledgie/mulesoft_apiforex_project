@@ -6,6 +6,7 @@
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="f7477b3f-ea43-4c87-a156-4cc5507e83be" file="dev-properties.yaml" />
 	<flow name="scheduler-every-2308Flow" doc:id="ae30e22d-1a16-40a8-814b-4ba00a131f73" initialState="stopped">
 		<scheduler doc:name="Every 23-08 hrs" doc:id="3825ed29-5a1b-47bb-a4d2-0b1b2a448b74" >
 			<scheduling-strategy >
@@ -35,7 +36,7 @@ output application/json
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<http:request method="GET" doc:name="Request ratesapi.io" doc:id="dbca279d-2b8d-4ff5-b68c-44e8e1234151" url="http://api.ratesapi.io/api/latest" />
+		<http:request method="GET" doc:name="Request ratesapi.io" doc:id="dbca279d-2b8d-4ff5-b68c-44e8e1234151" url='#[p("properties.http.request-api-uri")]' />
 		<ee:transform doc:name="Transform Payload" doc:id="d2e908c3-4160-420a-8f9a-4cb0416e7faa">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0

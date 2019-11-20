@@ -6,26 +6,93 @@
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="5b5ae06b-a6cd-4e2b-a3cd-6048a80c6f43" >
-		<os:connection />
-	</os:config>
-	<os:object-store name="Object_store" doc:name="Object store" doc:id="af068264-960b-4233-aa63-1775e2a60548" config-ref="ObjectStore_Config" maxEntries="1000" entryTtl="60" expirationInterval="15"/>
-	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="5d99ec24-2061-426d-972d-6faa7f3e66b2" keyGenerationExpression="#[vars.cacheKey]" objectStore="Object_store">
-	</ee:object-store-caching-strategy>
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a253c20e-89f9-42c4-b54c-1207164ced97" >
-		<http:listener-connection host="0.0.0.0" port="8081" />
+		<http:listener-connection host="0.0.0.0" port="8082" />
 	</http:listener-config>
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="066c0679-1cbf-48f2-bf24-8b0e070a3ad2" keyGenerationExpression="#[vars.cacheKey]" objectStore="Object_store" />
+	<configuration-properties doc:name="Configuration properties" doc:id="457aa04c-1eb3-4484-a37f-5736890b26a4" file="dev-properties.yaml" />
 	<flow name="myapi-starterjobFlow" doc:id="74668582-af9d-430c-b617-539bfc5e310a" >
-		<http:listener doc:name="Cache Listener" doc:id="efa853de-1a82-44cf-8010-d19bfa1aa21d" config-ref="HTTP_Listener_config" path="/cache">
-		</http:listener>
-		<set-variable value="#[%dw 2.0
+		<scheduler doc:name="Scheduler" doc:id="f1196c99-d8d9-4010-9869-535cb8107bed" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="DAYS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="8eac5328-12e7-45f0-ba86-ad92c29a9703" variableName="getTimeStamp"/>
+		<ee:transform doc:name="Set Header" doc:id="217c2cb7-a795-4fe0-87ae-b46709022847">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "myapi-starterjobFlow"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Log" doc:id="8d339323-32f4-4e4e-bb13-2482053eaf4d" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "na",	
+	"logstart": vars.getTimeStamp as String
+}]' />
+		<foreach doc:name="For Each" doc:id="51120ae7-bd78-455d-b85b-9c40f4b568fe" collection='#[p("properties.bases") splitBy(/[,]/)]' counterVariableName="counterBases" rootMessageVariableName="rootBaseMessage">
+			<set-variable value='#[(p("properties.bases") splitBy(/[,]/))[vars.counterBases - 1]]' doc:name="Set Base" doc:id="c4754180-9b59-449e-bd24-cd5eee213399" variableName="base"/>
+			<foreach doc:name="For Each" doc:id="c92f3444-f270-48b8-a973-97732cd93938" collection='#[p("properties.targets") splitBy(/[,]/)]' counterVariableName="counterTargets" rootMessageVariableName="rootTargetMessage">
+				<set-variable value='#[(p("properties.targets") splitBy(/[,]/))[vars.counterTargets - 1]]' doc:name="Set Target" doc:id="ba178506-4e7d-493b-ab92-2a3e1e375028" variableName="target"/>
+				<set-variable value='#[%dw 2.0
 output application/java
 ---
-attributes.requestUri as String]" doc:name="Cache Key" doc:id="67836cac-9f2e-4c0d-a077-ebf7b0d357ee" variableName="cacheKey"/>
-		<logger level="INFO" doc:name="Logger" doc:id="fe043702-a480-4d5e-811b-77a2d31b2e03" message='#["Before Entering the Cache Scope"]'/>
-		<ee:cache doc:name="Cache Scope" doc:id="e9c60189-2606-425f-bc8b-bde79b46e00a" cachingStrategy-ref="Caching_Strategy">
-			<set-payload value='#["value" as String]' doc:name="Set Payload" doc:id="57a8b90f-397f-4764-892f-f2b086455cce" />
-			<logger level="INFO" doc:name="Logger" doc:id="2daf0a95-b38e-4c00-b321-858adeafc0b2" message='#["Fuck Cache"]'/>
-		</ee:cache>
+(p("properties.cacheKeyPrepend")) ++ "baseCcy=" ++ vars.base ++ "&amp;targetCcy=" ++ vars.target]' doc:name="Cache Key" doc:id="67836cac-9f2e-4c0d-a077-ebf7b0d357ee" variableName="cacheKey" />
+				<logger level="INFO" doc:name="Logger" doc:id="fe043702-a480-4d5e-811b-77a2d31b2e03" message="#[vars.cacheKey]" />
+				<ee:cache doc:name="Cache" doc:id="25264b7f-c140-4b6e-8871-540e48e6fa06" cachingStrategy-ref="Caching_Strategy">
+				<logger level="INFO" doc:name="Logger" doc:id="3c1d0229-bc7b-40d8-8abc-9a34051d7d9a" message='#["Entering Cache with key of: " ++ (vars.cacheKey as String)]' />
+				<try doc:name="Try" doc:id="cc1a5edd-8d02-40d1-a3fd-f76e52b516ce" >
+						<until-successful maxRetries="3" doc:name="Until Successful" doc:id="8d6e1183-d9f0-46b9-87c8-94a36ea33167" millisBetweenRetries="30000">
+							<http:request method="GET" doc:name="Request" doc:id="b4e622cc-0cba-4ca4-90b2-e685ef3f1e51" url='#[p("properties.uri") ++ ("/api/currencyconversion?") ++ ("baseCcy=") ++ (vars.base as String) ++ ("&amp;targetCcy=") ++ (vars.target as String)]' />
+						</until-successful>
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="88957d59-12c8-4313-b651-38d2622c9360" type="ANY">
+								<logger level="INFO" doc:name="Logger" doc:id="d180822f-e614-40b2-8112-b6e728238901" message='#["Failed Fetch"]'/>
+							</on-error-continue>
+						</error-handler>
+					</try>
+					<set-payload value='#[%dw 2.0
+output application/java
+---
+write(payload,"application/json") as String]' doc:name="Set Payload" doc:id="cac0e3c8-694d-48a4-8cec-52a072e795de" />
+			</ee:cache>
+			</foreach>
+		</foreach>
+		<logger level="INFO" doc:name="End Log" doc:id="9fa7d5d5-d387-4501-9f76-7acf0e26b9e8" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "na",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime,
+	"message": "SUCCESS"
+}]' />
+	</flow>
+	<flow name="myapi-starterjobFlow1" doc:id="9f62076c-b19f-4604-8fad-28c4db548967" initialState="stopped">
+		<http:listener doc:name="Listener" doc:id="39f3ca20-c838-4797-b1ba-13fa2825223c" config-ref="shared_resource_HTTP" path="/api/cache"/>
+		<set-variable value="#[attributes.requestUri as String]" doc:name="Set Variable" doc:id="9e2bfc65-cdb1-43a7-a4f1-af53a469cf82" variableName="cacheKey"/>
+		<os:retrieve doc:name="Retrieve" doc:id="fd1bfb05-04ac-4ed1-8ed8-a50f0fe2a4c0" key="#[vars.cacheKey as String]" objectStore="Object_store"/>
+		<set-payload value="#[%dw 2.0
+output application/java
+---
+payload[6].payload]" doc:name="Set Payload" doc:id="37eb1fe3-be63-4072-a449-06e7e98883a9" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="2d9b88b0-bd12-47f4-a6da-42411853983d" >
+				<logger level="INFO" doc:name="Logger" doc:id="050cb1ec-89ee-4ead-a74a-94ec9c647c0f" message="#[error.errorMessage]"/>
+			</on-error-propagate>
+		</error-handler>
 	</flow>
 </mule>
