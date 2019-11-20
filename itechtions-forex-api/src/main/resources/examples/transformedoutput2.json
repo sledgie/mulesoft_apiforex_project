@@ -1,0 +1,16 @@
+{
+	"resultset":{
+		"result":{
+			"baseCurrency": "EUR",
+			"targetCurrency": "CAD",
+			"conversionRate": 1.4486,
+			"date": "2019-10-29"
+		},
+		"result":{
+			"baseCurrency": "EUR",
+			"targetCurrency": "PHP",
+			"conversionRate": 31.4486,
+			"date": "2019-10-29"			
+		}
+	}
+}

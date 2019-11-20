@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="log_in" format="json">
+      <types:shape format="json-schema" location="schemas/loggerin.json"/>
+    </types:type>
+    <types:type name="inputpayload" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+    <types:type name="logger_out" format="json">
+      <types:shape format="json-schema" location="schemas/loggerout.json"/>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#4ef0785f-c5dc-4476-8c58-4ecb3c4a0db8">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:variables>
+          <types:variable name="logger_in" type="log_in"/>
+        </types:variables>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#2e8fcf31-aefe-48d6-8f33-12d149b90fa8">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="log_in"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#fb64cece-53e7-4f8c-86f4-12658ddd14a9">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="log_in"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#6401aa4b-6a69-4f1e-8cf9-1138e2d913e9">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="log_in"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#ed038ade-b0c9-4ef5-8917-ec153bb34cab">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="logger_out"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#e4ddcc37-ac97-4a6e-ba65-3162671ea8e5">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="log_in"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#ca77bbf5-c72c-4e8a-9877-3b79ce12f1e8">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="logger_out"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

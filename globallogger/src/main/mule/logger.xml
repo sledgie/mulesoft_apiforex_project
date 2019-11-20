@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="ee250ba7-d8f7-4c72-a644-d7a6f6b54bf6" file="jsonloggerconfig.yaml" />
+	<os:config name="Logger_ObjectStore_Config" doc:name="ObjectStore Config" doc:id="1222111a-b55c-439d-94e0-604be8d0d44c" >
+		<os:connection />
+	</os:config>
+	<os:object-store name="LoggerObjectStore" doc:name="Object store" doc:id="0c3ee371-4e10-442f-a04f-af6150846fb0" persistent="false" maxEntries="20" entryTtl="60" config-ref="Logger_ObjectStore_Config" />
+	<flow name="logger-start" doc:id="c341bbfb-b956-4388-b127-6952ba95bb37">
+		<ee:transform doc:name="Initial Payload" doc:id="6401aa4b-6a69-4f1e-8cf9-1138e2d913e9">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="pLoad"><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject(value, key, index)-> {
+	(key): value
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Get Initial Time" doc:id="7c2929c2-d07b-4efc-9448-81f3993c6d61" name="get_Initial_Time" />
+		<choice doc:name="Choice" doc:id="4c806835-d6e6-4201-b1d7-124d8ba5e0d2">
+			<when expression='#[vars.pLoad.logtofile == "true"]'>
+				<try doc:name="Try" doc:id="93aa1ee5-bb2b-44c5-beb0-394b1b50c6e5">
+					<file:write doc:name="Write" doc:id="055842e8-b50a-47a1-8d2f-9dc4140237b4" path="#[(p('file.logpath')) ++ vars.pLoad.projectname ++ &quot;_&quot; ++ (now() as String{format: &quot;yyyyMMdd&quot;}) ++ &quot;.log&quot;]" mode="APPEND">
+						<file:content><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad.correlationid,
+starttime: vars.initialTimeStamp,
+projectname: vars.pLoad.projectname,
+flowname: vars.pLoad.flowname,
+message: vars.pLoad.message
+}]]]></file:content>
+					</file:write>
+					<error-handler>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0a27e22c-7048-4fdb-be3b-0d5ca618aa56" type="ANY">
+							<logger level="INFO" doc:name="Logger" doc:id="6317e308-ed25-4fe7-b459-d8fa6229fb52" message="#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad.correlationid,
+starttime: vars.initialTimeStamp,
+projectname: vars.pLoad.projectname,
+flowname: vars.pLoad.flowname,
+message: vars.pLoad.message
+}]" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="15ab9332-27a9-4da3-88ea-835f44d7a661" message="#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad.correlationid,
+starttime: vars.initialTimeStamp,
+projectname: vars.pLoad.projectname,
+flowname: vars.pLoad.flowname,
+message: vars.pLoad.message
+}]" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="logger-end" doc:id="276cae0f-13ef-4536-89bc-b2cb2b614c6f" >
+		<ee:transform doc:name="Logger End" doc:id="ed038ade-b0c9-4ef5-8917-ec153bb34cab" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="pLoadOut" ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject(value, key, index)-> {
+	(key): value
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="673f5561-eeb7-4649-89ac-e4a57f4414fc" name="get_End_Time"/>
+		<choice doc:name="Choice" doc:id="0a41fa19-73fd-49da-98e1-24cefc77ef8f" >
+			<when expression='#[vars.pLoadOut.logtofile == "true"]' >
+				<try doc:name="Try" doc:id="3ef2c6e2-4b87-4366-a37b-e5130d708d9a" >
+					<file:write doc:name="Write" doc:id="340edca4-9a70-432c-a68f-0dfea9b86e37" path="#[(p('file.logpath')) ++ vars.pLoad.projectname ++ &quot;_&quot; ++ (now() as String{format: &quot;yyyyMMdd&quot;}) ++ &quot;.log&quot;]" mode="APPEND" >
+						<file:content ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend.seconds as String) ++ "." ++  (vars.logend.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut.projectname,
+flowname: vars.pLoadOut.flowname,
+message: vars.pLoadOut.message
+}]]]></file:content>
+					</file:write>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="96a1f084-ebd0-42b6-b38c-1da486989ebe" type="ANY" >
+							<logger level="INFO" doc:name="Logger" doc:id="5c0ce6c8-b187-48c9-934a-81a73f84991e" message='#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend.seconds as String) ++ "." ++  (vars.logend.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut.projectname,
+flowname: vars.pLoadOut.flowname,
+message: vars.pLoadOut.message
+}]' />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="3c33a142-f403-4342-80f0-14492db7ddde" message='#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend.seconds as String) ++ "." ++  (vars.logend.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut.projectname,
+flowname: vars.pLoadOut.flowname,
+message: vars.pLoadOut.message
+}]' />
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="get_Initial_Time" doc:id="15c74aea-3f16-4fad-8507-6aa445b746b2" >
+		<set-variable value="#[now()]" doc:name="Set Initial Time" doc:id="f0fb357c-9d45-46fb-ab3a-3290cce27cb8" variableName="initialTimeStamp"/>
+		<os:store doc:name="Store" doc:id="8807534f-8e44-4301-8467-200d8bb9e88b" key="#[vars.pload.correlationid]" objectStore="LoggerObjectStore">
+			<os:value ><![CDATA[#[now()]]]></os:value>
+		</os:store>
+	</sub-flow>
+	<sub-flow name="get_Initial_Time_Component" doc:id="dfab3405-aaa6-4380-bf8d-fbb215f0e7fb">
+		<set-variable value="#[now()]" doc:name="Set Initial Time Component" doc:id="33be728e-4834-426f-868d-54ba8a13b9a3" variableName="initialTimeStamp_Component" />
+		<os:store doc:name="Store" doc:id="fd4fd5ac-3348-424f-9e29-67c536cee248" key='#[(vars.pLoad_Component.correlationid as String) ++ "_Component"]' objectStore="LoggerObjectStore">
+			<os:value><![CDATA[#[now()]]]></os:value>
+		</os:store>
+	</sub-flow>
+	<sub-flow name="get_End_Time" doc:id="cb67bd23-02cd-4712-9699-0f31a7caab20" >
+		<os:retrieve doc:name="Retrieve" doc:id="62572475-95d2-4491-9062-e1649224a56e" key="#[vars.pLoadOut.correlationid]" target="loggerend" objectStore="LoggerObjectStore"/>
+		<set-variable value="#[(now() as DateTime) - (vars.loggerend as DateTime)]" doc:name="Log End" doc:id="212f72fe-7606-4b79-9907-e23478b49ccf" variableName="logend"/>
+		<os:remove doc:name="Remove" doc:id="8f9c8323-84f0-414b-a5d5-ac439d554705" key="#[vars.pLoadOut.correlationid]" objectStore="LoggerObjectStore"/>
+	</sub-flow>
+	<sub-flow name="get_End_Time_Component" doc:id="bec1f77e-b5e5-4547-a729-adc6907184dc">
+		<os:retrieve doc:name="Retrieve" doc:id="f10c97d0-a1c3-4aac-81a6-e4a94d291b47" key='#[(vars.pLoadOut_Component.correlationid as String) ++ "_Component"]' objectStore="LoggerObjectStore" target="loggerend_component" />
+		<set-variable value="#[(now() as DateTime) - (vars.loggerend_component as DateTime)]" doc:name="Log End" doc:id="48cc61ff-c15e-4597-809e-2e3b08dc8b7f" variableName="logend_component" />
+		<os:remove doc:name="Remove" doc:id="9f2f4319-bf85-4fcd-a429-825d2bf50420" key='#[(vars.pLoadOut_Component.correlationid as String) ++ "_Component"]' objectStore="LoggerObjectStore" />
+	</sub-flow>
+	<flow name="logger-start-component" doc:id="a0cc9de4-5619-4927-b9a8-a84580181469" >
+		<ee:transform doc:name="Component Initial Payload" doc:id="e4ddcc37-ac97-4a6e-ba65-3162671ea8e5" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="pLoad_Component" ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject(value, key, index)-> {
+	(key): value
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Component Get Initial Time" doc:id="0e3e8fc3-383d-4791-9df3-dc7f2f3e1cdd" name="get_Initial_Time_Component" />
+		<choice doc:name="Choice" doc:id="3d5f5a6a-8fab-4e06-ac04-9a60657c9d3b" >
+			<when expression='#[vars.pLoad_Component.logtofile == "true"]' >
+				<try doc:name="Try" doc:id="2ad312c4-9199-4fe0-86c3-627028633597" >
+					<file:write doc:name="Write" doc:id="469c6980-bd91-4591-bf1c-3745d9f6f4cd" path="#[(p('file.logpath')) ++ vars.pLoad.projectname ++ &quot;_&quot; ++ (now() as String{format: &quot;yyyyMMdd&quot;}) ++ &quot;.log&quot;]" mode="APPEND" >
+						<file:content ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad_Component.correlationid,
+starttime: vars.initialTimeStamp_Component,
+projectname: vars.pLoad_Component.projectname,
+flowname: vars.pLoad_Component.flowname,
+component: vars.pLoad_Component.component_to_run,
+backend: vars.pLoad_Component.backend,
+message: vars.pLoad_Component.message
+}]]]></file:content>
+					</file:write>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="90b6b00a-ed2c-4114-b243-e568260f69da" type="ANY" >
+							<logger level="INFO" doc:name="Logger" doc:id="22e4d975-9f5a-4e6d-935c-cbf8bee0f946" message="#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad_Component.correlationid,
+starttime: vars.initialTimeStamp_Component,
+projectname: vars.pLoad_Component.projectname,
+flowname: vars.pLoad_Component.flowname,
+component: vars.pLoad_Component.component_to_run,
+backend: vars.pLoad_Component.backend,
+message: vars.pLoad_Component.message
+}]" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="43a27957-8590-4416-86b3-4c8bfb5ae8b3" message="#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoad_Component.correlationid,
+starttime: vars.initialTimeStamp_Component,
+projectname: vars.pLoad_Component.projectname,
+flowname: vars.pLoad_Component.flowname,
+component: vars.pLoad_Component.component_to_run,
+backend: vars.pLoad_Component.backend,
+message: vars.pLoad_Component.message
+}]" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="logger-end-component" doc:id="db770d65-8a4f-4ebc-a518-97ea7c9a25b8" >
+		<ee:transform doc:name="Logger End - Component" doc:id="ca77bbf5-c72c-4e8a-9877-3b79ce12f1e8" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="pLoadOut_Component" ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject(value, key, index)-> {
+	(key): value
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="cecfdd4d-1458-4b28-ba4a-a9535ac82bf6" name="get_End_Time_Component" />
+		<choice doc:name="Choice" doc:id="5e6a7602-24c2-47db-9b52-954f5166e152" >
+			<when expression='#[vars.pLoadOut_Component.logtofile == "true"]' >
+				<try doc:name="Try" doc:id="aafcb294-9efe-4b75-986a-7c5ec0cd266f" >
+					<file:write doc:name="Write" doc:id="5d7b5880-029f-4252-bca2-7aa1c47440ca" path="#[(p('file.logpath')) ++ vars.pLoad.projectname ++ &quot;_&quot; ++ (now() as String{format: &quot;yyyyMMdd&quot;}) ++ &quot;.log&quot;]" mode="APPEND" >
+						<file:content ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut_Component.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend_component.seconds as String) ++ "." ++  (vars.logend_component.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut_Component.projectname,
+flowname: vars.pLoadOut_Component.flowname,
+component: vars.pLoadOut_Component.component_to_run,
+backend: vars.pLoadOut_Component.backend,
+message: vars.pLoadOut_Component.message
+}]]]></file:content>
+					</file:write>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ea1afaa8-a319-40a1-bda2-0f384c96e58d" type="ANY" >
+							<logger level="INFO" doc:name="Logger" doc:id="3c00527d-0824-4b03-b3a5-98d7b0890ba9" message='#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut_Component.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend_component.seconds as String) ++ "." ++  (vars.logend_component.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut_Component.projectname,
+flowname: vars.pLoadOut_Component.flowname,
+component: vars.pLoadOut_Component.component_to_run,
+backend: vars.pLoadOut_Component.backend,
+message: vars.pLoadOut_Component.message,
+error: error.description
+}]' />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="8d34c441-c2d4-40e6-897d-575e416e7cd6" message='#[%dw 2.0
+output application/json
+---
+{
+correlationid: vars.pLoadOut_Component.correlationid,
+endtime: now(),
+elapsedtime: (vars.logend_component.seconds as String) ++ "." ++  (vars.logend_component.nanos as String)[0 to 2] ++ " seconds",
+projectname: vars.pLoadOut_Component.projectname,
+flowname: vars.pLoadOut_Component.flowname,
+component: vars.pLoadOut_Component.component_executed,
+backend: vars.pLoadOut_Component.backend,
+message: vars.pLoadOut_Component.message
+}]' />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

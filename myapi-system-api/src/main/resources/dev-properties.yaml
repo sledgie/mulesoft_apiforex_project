@@ -1,0 +1,5 @@
+properties:
+  projectname: "myapi-system-api"
+  cacheKeyPrepend: "/sys-api/forex?"
+  cacheKeys: "baseCcy=EUR&targetCcy=CAD,baseCcy=EUR&targetCcy=PHP,baseCcy=EUR&targetCcy=INR"
+  uri: "http://localhost:8081"

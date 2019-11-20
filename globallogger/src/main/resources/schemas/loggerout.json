@@ -1,0 +1,75 @@
+{
+	"definitions": {},
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "http://example.com/root.json",
+	"type": "object",
+	"title": "End Logger Schema",
+	"properties": {
+		"correlationid": {
+			"$id": "#/properties/correlationid",
+			"type": "string",
+			"title": "The Correlationid Schema",
+			"default": "",
+			"examples": [
+				""
+			],
+			"pattern": "^(.*)$"
+		},
+		"projectname": {
+			"$id": "#/properties/projectname",
+			"type": "string",
+			"title": "The Projectname Schema",
+			"default": "",
+			"examples": [
+				"pname"
+			],
+			"pattern": "^(.*)$"
+		},
+		"configxmlname": {
+			"$id": "#/properties/configxmlname",
+			"type": "string",
+			"title": "The Configxmlname Schema",
+			"default": "",
+			"examples": [
+				"configxmlname"
+			],
+			"pattern": "^(.*)$"
+		},
+		"flowname": {
+			"$id": "#/properties/flowname",
+			"type": "string",
+			"title": "The Flowname Schema",
+			"default": "",
+			"examples": [
+				"flowname"
+			],
+			"pattern": "^(.*)$"
+		},
+		"message": {
+			"$id": "#/properties/message",
+			"type": "string",
+			"title": "The Message Schema",
+			"default": "",
+			"examples": [
+				"This is a message"
+			],
+			"pattern": "^(.*)$"
+		},
+		"category": {
+			"$id": "#/properties/category",
+			"type": "string",
+			"title": "The Category Schema",
+			"default": "",
+			"examples": [
+				"category"
+			],
+			"pattern": "^(.*)$"
+		}
+	},
+	"required": [
+		"projectname",
+		"configxmlname",
+		"flowname",		
+		"category"
+	]
+}

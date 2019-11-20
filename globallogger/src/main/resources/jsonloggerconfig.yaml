@@ -1,0 +1,9 @@
+json:
+  logger:
+    application:
+      name: "Sample"
+      version: "1"
+mule:
+  env: "4"
+file:
+  logpath: "C:/temp/logger/"

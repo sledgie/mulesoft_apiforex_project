@@ -1,0 +1,6 @@
+properties:
+  projectname: "myapi-starterjob"
+  cacheKeyPrepend: "/sys-api/forex?"
+  bases: "GBP"
+  targets: "GBP,INR,PHP"  
+  uri: "http://localhost:8081"

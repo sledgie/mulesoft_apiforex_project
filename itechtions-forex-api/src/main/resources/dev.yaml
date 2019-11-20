@@ -1,0 +1,7 @@
+properties:
+  projectname: "myapi-forex-api"
+  http:
+    host: "localhost"
+    port: "8081"
+  backend:
+    uri: "http://api.ratesapi.io/api/latest"

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="066c0679-1cbf-48f2-bf24-8b0e070a3ad2" keyGenerationExpression="#[vars.cacheKey]" objectStore="Object_store" />
+	<configuration-properties doc:name="Configuration properties" doc:id="457aa04c-1eb3-4484-a37f-5736890b26a4" file="dev-properties.yaml" />
+	<flow name="myapi-system-api-flow" doc:id="9f62076c-b19f-4604-8fad-28c4db548967">
+		<http:listener doc:name="Listener" doc:id="39f3ca20-c838-4797-b1ba-13fa2825223c" config-ref="shared_resource_HTTP" path="/sys-api/forex"/>
+		<set-variable value="#[now()]" doc:name="Get Current Time" doc:id="1338cf73-28c2-4130-a00d-a78dc3da7944" variableName="getTimeStamp" />
+		<ee:transform doc:name="Set Header" doc:id="1a675530-bd90-4d88-832a-37cf4ec7ffba">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="header"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"correlationid": uuid(),
+	"projectname": p("properties.projectname"),
+	"modulename": "myapi-system-api-flow"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[attributes.requestUri as String]" doc:name="Set Variable" doc:id="9e2bfc65-cdb1-43a7-a4f1-af53a469cf82" variableName="requestUri"/>
+		<ee:transform doc:name="Empty Array" doc:id="735ae007-6005-4d62-9381-d0ff2ebee37f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="acc" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="dfa47b88-2ef3-4239-a042-58c1eec97e23" collection='#[(attributes.queryParams["targetCcy"] as String) splitBy(/[,]/)]'>
+			<logger level="INFO" doc:name="Logger" doc:id="2013a31a-df9d-45a2-97e4-4ed0d8b65ee7" message="#[payload]"/>
+			<set-variable value='#[(vars.requestUri splitBy "&amp;")[0] ++ ("&amp;targetCcy=") ++ (payload)]' doc:name="Set CacheKey" doc:id="903498aa-8372-45fc-9d7f-0cde92d6f1f9" variableName="cacheKey"/>
+			<os:retrieve doc:name="Retrieve" doc:id="fd1bfb05-04ac-4ed1-8ed8-a50f0fe2a4c0" key="#[vars.cacheKey as String]" objectStore="Object_store">
+			<os:default-value><![CDATA[#["There are no saved data for the key " ++ (vars.cacheKey) ++ " in StoreObject"]]]></os:default-value>
+		</os:retrieve>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+payload[6].payload]" doc:name="Set Payload" doc:id="e3f7aaed-3dcc-4b02-8159-68771b3290e8" />
+			<ee:transform doc:name="Insert Payload" doc:id="6b1017bb-5db7-423c-ae18-64355d5c5a0d" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="acc" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.acc + read(payload,"application/json").ResultSet.Result[0]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	ResultSet:
+	"Result": vars.acc map (value, index)-&gt;{
+		"baseCategory": value.baseCategory,
+		"targetConversion": value.targetCategory,
+		"conversionrate": value.conversionrate,
+		"date": value.date
+	}
+}]' doc:name="Set Payload" doc:id="37eb1fe3-be63-4072-a449-06e7e98883a9" />
+		<logger level="INFO" doc:name="End Log" doc:id="1fea321c-4906-4fed-a802-edf01dffb209" message='#[%dw 2.0
+output application/json
+---
+{
+	"projectname": vars.header.projectname,
+	"version": "V1",
+	"endpoint": "na",
+	"logstart": vars.getTimeStamp as String,
+	"logend": now() as String,
+	"elapsedTime": now() as DateTime - vars.getTimeStamp as DateTime,
+	"message": "SUCCESS"
+}]' />
+	</flow>
+</mule>
