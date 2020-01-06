@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="fbd4721d-ad49-4b14-a78a-25f27bb08fd5" >
+		<mongo:connection-string-connection connectionString="mongodb+srv://itechtions:itechtions@cluster0-xdvrz.mongodb.net/CurrencyConverter" />
+	</mongo:config>
+	<flow name="MongoDBFlow" doc:id="5b1e3eeb-b398-4fb9-be26-1c5d751e7445">
+		<http:listener doc:name="Listener" doc:id="5b9b3c3a-e322-4b33-b6c6-99284468ba5f" config-ref="shared_resource_HTTP" path="/testmongo" />
+		<mongo:remove-documents doc:name="Remove documents" doc:id="ec0c5b8a-a7b3-44dc-8a20-34a83a1331f6" config-ref="MongoDB_Config" collectionName="Rates">
+			<mongo:find-query ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: {"\$gt": 1}
+}]]]></mongo:find-query>
+		</mongo:remove-documents>
+		<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"message": "Hello Deleted"	
+}]' doc:name="Set Payload" doc:id="e4462538-daa3-41a4-9541-922c84747904" />
+	</flow>
+	<sub-flow name="Insert_Mongo_Sub_Flow" doc:id="d925f021-0221-4552-927b-135afaf36d54" >
+		<try doc:name="Try" doc:id="147c9147-718f-4694-87af-6862b5aa933e" >
+			<mongo:find-documents collectionName="Rates" doc:name="Get Latest s_no" doc:id="7be3fd70-2e6a-45b0-b27b-f146af41a159" config-ref="MongoDB_Config" numToSkip="0" resultLimit="1" target="latest_s_no">
+				<mongo:condition-query ><![CDATA[#["{ s_no: {\$gt : 1}}"]]]></mongo:condition-query>
+				<mongo:sort-by ><![CDATA[#["{s_no:-1}"]]]></mongo:sort-by>
+		</mongo:find-documents>
+			<mongo:insert-document doc:name="Insert document" doc:id="b05b9113-ed1c-4c21-a626-cb306af9cd2c" config-ref="MongoDB_Config" collectionName="Rates">
+			<mongo:document><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"s_no": vars.latest_s_no[0].s_no as Number + 1,
+	"source": payload.baseCategory as String default "ERR",
+	"target": payload.targetCategory as String default "ERR",
+	"conversion_rate":payload.conversionrate as Number default 0,
+	"date_created": now() as String{format: "YYYY-MM-dd HH:mm:ss"}
+}]]]></mongo:document>
+		</mongo:insert-document>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 201,
+	&quot;message&quot;: &quot;Created&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Insert Output Payload" doc:id="031828a8-0c65-4c4d-b97f-581c5d55447a" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="89adff58-7a88-4e45-a8db-89b3fc255d13" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Insert Error Payload" doc:id="b34ce967-f63b-447a-9244-8593ccc82dcf" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Update_Mongo_Sub_Flow" doc:id="76a30c5a-9815-4d10-a4c6-e7b22179b943" >
+		<try doc:name="Try" doc:id="32d198ee-cef3-4418-b7ae-38b52f6cc1b4" >
+			<mongo:update-documents collectionName="Rates" doc:name="Update Rate Details" doc:id="35533289-192f-4727-8675-c4d5f3866f4c" config-ref="MongoDB_Config" multipleUpdate="false">
+			<mongo:find-query><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: payload.s_no as Number
+}]]]></mongo:find-query>
+			<mongo:content-to-update><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	"conversion_rate": 12.25,
+	"date_modified": now() as String{format: "yyyy-MM-dd hh:mm:ss"}
+}]]]></mongo:content-to-update>
+		</mongo:update-documents>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 200,
+	&quot;message&quot;: &quot;Updated&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Update Output Payload" doc:id="f911f92a-da29-42f1-bc7a-4307c394de45" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a7e0693a-ca0e-4eb6-b08d-a758b4d9445b" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Update Error Payload" doc:id="9b4e14a3-35d3-4289-b927-05b4e20eb26f" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Delete_Mongo_Sub_Flow" doc:id="8d2f3f3a-9cf5-43df-96eb-38c27bc61055" >
+		<try doc:name="Try" doc:id="92ce00a6-9c60-40a8-817c-9a28fbb5ccbb" >
+			<mongo:remove-documents collectionName="Rates" doc:name="Remove document" doc:id="189a87d0-82ac-4148-a923-2b97ddd08f94" config-ref="MongoDB_Config">
+			<mongo:find-query><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: payload.s_no as Number
+}]]]></mongo:find-query>
+		</mongo:remove-documents>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 200,
+	&quot;message&quot;: &quot;Deleted&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Delete Output Payload" doc:id="a31a57f1-c9b9-4d26-b703-14b58c93fff1" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1ba58722-d24d-43cc-90cd-6911ec641257" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Delete Error Payload" doc:id="902fc2cb-2ac6-4534-a7cc-9828a87cfdbd" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Get_Mongo_Sub_Flow" doc:id="6c0439a3-26fe-4e8d-ac64-30d0e6112361" >
+		<try doc:name="Try" doc:id="679fdb79-b8e1-42e0-8d2e-3ad71aff5735" >
+			<mongo:find-one-document collectionName="Rates" doc:name="Find one document" doc:id="44f39a36-810f-4afe-b19a-4e49b0e1dfed" config-ref="MongoDB_Config">
+			<mongo:find-query><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: payload.s_no as Number
+}]]]></mongo:find-query>
+		</mongo:find-one-document>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	date_modified: payload.date_modified default null,
+	date_created: payload.date_created,
+	s_no: payload.s_no.'\$numberDecimal' as Number,
+	source: payload.source default &quot;&quot;,
+	conversion_rate: payload.conversion_rate,
+	target: payload.target
+}]" doc:name="Get Output Payload" doc:id="98ccd81b-d219-42a7-b5c1-d691ad25aaaa" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d92fb53f-be93-4a04-9f28-abd31a8bf033" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Get Error Payload" doc:id="53c2ed8b-0532-47e4-8b7a-02555761a825" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+</mule>

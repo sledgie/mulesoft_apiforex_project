@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="05476689-596a-4f7f-9061-9e3891ed3a4d" basePath="/" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<flow name="currencyapi_callbackFlow" doc:id="aeab5a22-2be6-498b-98b4-f297341a6c92" >
+		<http:listener doc:name="Listener" doc:id="e4745f19-8cff-4b25-898b-6753dcf9cf9d" config-ref="HTTP_Listener_config" path="/callback"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2b8aec27-f1e0-49a5-a833-e4044e23bbba" message="#[payload]"/>
+	</flow>
+	<flow name="currencyapi_callbackFlow1" doc:id="00d46af5-d2af-4fcb-bd37-ae8d36d845bb" >
+		<http:listener doc:name="Listener" doc:id="b30cb5c5-861e-41f5-9f05-161098e72572" config-ref="HTTP_Listener_config" path="login"/>
+		<logger level="INFO" doc:name="Logger" doc:id="c2e9161b-3257-4c63-903f-f3dfb574a253" message="#[payload]"/>
+	</flow>
+</mule>

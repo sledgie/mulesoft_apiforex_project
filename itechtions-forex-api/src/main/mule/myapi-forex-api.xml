@@ -14,7 +14,6 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 			<apikit:flow-mapping resource="/currencyconversion/baseCcy/{base}/targetCcy/{target}/outputtype/{outputtype}" action="get" flow-ref="get:\currencyconversion\baseCcy\(base)\targetCcy\(target)\outputtype\(outputtype):currencyconverter-config" />			
 		</apikit:flow-mappings>
 	</apikit:config>
-	<api-gateway:autodiscovery apiId="15866683" doc:name="API Autodiscovery" doc:id="3da43a95-ef6c-4d46-ac74-f97a08b82b69" flowRef="myapi-forex-api-main" />
 	<import doc:name="Import Logger" doc:id="731ef15b-b582-4c41-9b9f-f6607b225f5f" file="logger.xml" />
 	<flow name="myapi-forex-api-main">
         <http:listener path="/api/*" outputMimeType="application/json" config-ref="shared_resource_HTTP">

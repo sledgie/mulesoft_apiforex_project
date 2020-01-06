@@ -1,0 +1,19 @@
+{
+	"configs":[
+		"currencyapi_queue_bridge.xml"
+	],
+	"redeploymentEnabled": "true",
+	"name": "currencyapi_queue_bridge",	
+  	"minMuleVersion": "4.2.1",
+  	"requiredProduct": "MULE_EE",
+  	"classLoaderModelLoaderDescriptor":{
+  		"id": "mule",
+  		"attributes":{
+  			"exportedResources": ["com.tibco.tibjms.naming.TibjmsInitialContextFactory"]
+  		}
+  	},
+  	"bundleDescriptorLoader":{
+  		"id": "mule",
+  		"attributes": {}
+  	}
+}

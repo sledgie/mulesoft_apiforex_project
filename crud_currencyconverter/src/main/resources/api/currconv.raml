@@ -1,0 +1,29 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/a9ab199d-ddc7-4e07-8f4a-a71a6102ba91/ # 
+title: CurrConv
+version: 1.0
+protocols: HTTP
+mediaType: 
+  - application/json
+traits:
+  responses_get: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/responses/1.0.3/responses_Get.raml
+  responses_create: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/responses/1.0.3/Response_Create.raml
+  responses_update: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/responses/1.0.3/Response_Update.raml
+  responses_delete: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/responses/1.0.3/Response_Delete.raml
+
+/currencyapi/sys/s_no/{s_no}:
+  get:
+    is: [ responses_get ]
+/currencyapi/sys/s_no/{s_no}/dbtype/{dbtype}:
+  get:
+    is: [ responses_get ]
+  delete:
+    is: [ responses_delete ]
+/currencyapi/sys/base/{base}/target/{target}/rate/{rate}:
+  post:
+    is: [ responses_create ]
+/currencyapi/sys/key/{key}/base/{base}/target/{target}/rate/{rate}/dbtype/{dbtype}:
+  put:
+    is: [ responses_update ]
+
+ 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="Delete_Process_Sub_Flow" doc:id="c28c7cfc-ccda-4eaa-acfd-30022c190b69" >
+		<choice doc:name="Choice" doc:id="283178bb-11d4-4782-a74d-62abed54f78b" >
+			<when expression='#[payload.dbtype == "mongo"]'>
+				<flow-ref doc:name="Delete Mongo Document" doc:id="74e6c1eb-8084-4c2a-8a9e-00ea481f5915" name="Delete_Mongo_Sub_Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Delete MySQL Record" doc:id="889d9556-56ae-4e47-8f0c-d665e43e969e" name="Delete_Sub_Flow"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

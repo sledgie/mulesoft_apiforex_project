@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scope-logger="http://www.mulesoft.org/schema/mule/scope-logger" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/scope-logger http://www.mulesoft.org/schema/mule/scope-logger/current/mule-scope-logger.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f1d632e9-cf47-493d-80ed-8aa38b5c37e5" >
+		<db:my-sql-connection host="sql9.freesqldatabase.com" port="3306" user="sql9317611" password="vvaYJa8c1F" database="sql9317611" />
+	</db:config>
+	<sub-flow name="Insert_Sub_Flow" doc:id="52421f92-9a71-4237-94e4-256051aa67d7" >
+		<try doc:name="Try" doc:id="3184da7f-aeee-40ef-9c4a-d356404c6a09" >
+			<db:insert doc:name="Insert" doc:id="c51c433a-552e-4838-ad4c-2209577b47a2" config-ref="Database_Config">
+				<db:sql>INSERT INTO CurrencyConverter(source, target, conversion_rate, date_created, date_modified) VALUES(:source, :target, :conversion_rate, :date_created, null)</db:sql>
+				<db:input-parameters><![CDATA[#[{	
+	"source": payload.baseCategory,
+	"target": payload.targetCategory,
+	"conversion_rate": payload.conversionrate as Number,
+	"date_created": now() as String{format:"yyyy-MM-dd'T'HH:mm:ss"}
+}]]]></db:input-parameters>
+			</db:insert>
+			<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 201,
+	&quot;message&quot;: &quot;Created&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Insert Output Payload" doc:id="437c830d-2f6c-408c-b79e-6126bccd8218" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="918b8af1-87f4-422a-acf8-4a9820341eba" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Insert Error Payload" doc:id="14f5dc71-9e0c-43ac-b8f8-1aba7618b26e" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Update_Sub_Flow" doc:id="ecb948ed-4a03-43c7-9a3d-5a67a4cd4e56" >
+		<try doc:name="Try" doc:id="90db4878-9481-40c3-a5e2-075c99d51cde" >
+			<db:update doc:name="Update" doc:id="36affede-089a-4a7f-a303-f2dd8838fa3d" config-ref="Database_Config">
+				<db:sql>UPDATE CurrencyConverter SET conversion_rate = :conversion_rate, date_modified = :date_modified, source = :source, target = :target WHERE s_no = :s_no</db:sql>
+				<db:input-parameters><![CDATA[#[{	
+	"conversion_rate": payload.conversionrate as Number,
+	"date_modified": now() as String{format:"yyyy-MM-dd'T'HH:mm:ss"},
+	"source": payload.baseCategory,
+	"target": payload.targetCategory,
+	"s_no": payload.s_no
+}]]]></db:input-parameters>
+			</db:update>
+			<choice doc:name="Choice" doc:id="24e14ea9-e3e7-467a-8643-a3fd9f1e3c7c" >
+				<when expression="#[payload.affectedRows &gt; 0]">
+					<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 200,
+	&quot;message&quot;: &quot;Updated&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Update Output Payload" doc:id="c3d53d89-dc9c-487c-beee-13fc7a4f49df" />
+				</when>
+				<otherwise >
+					<raise-error doc:name="Raise error" doc:id="40eaed5b-a85d-41e5-9774-361076d38afe" type="CUSTOM:NO_RECORD_FOUND" description="No Record Found"/>
+				</otherwise>
+			</choice>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="93a1f15f-fc61-4049-9cfa-032a5be78ec2" >
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Update Error Payload" doc:id="e5de3258-63f9-406a-b7fe-fef95e41938a" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Delete_Sub_Flow" doc:id="260b0c44-20f5-41d2-b89a-34b42e99d18a" >
+		<try doc:name="Try" doc:id="8fa4f3a6-0b3a-4e08-a286-2a853a45895f" >
+			<db:delete doc:name="Delete" doc:id="5691869c-b5c3-44dd-a346-2d13689a31d0" config-ref="Database_Config">
+			<db:sql>DELETE FROM CurrencyConverter WHERE s_no = :s_no</db:sql>
+			<db:input-parameters><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: payload.s_no
+}]]]></db:input-parameters>
+		</db:delete>
+			<choice doc:name="Choice" doc:id="83f0a393-dfe7-421d-815a-af861e2211d2" >
+				<when expression="#[payload &gt; 0]">
+					<set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	&quot;code&quot;: 200,
+	&quot;message&quot;: &quot;Deleted&quot;,
+	&quot;datetime&quot;: now() as String{format: &quot;yyyy-MM-dd'T'hh:mm:ss&quot;}
+}]" doc:name="Delete Output Payload" doc:id="7277b846-0935-46b6-9c98-79a94eae11d3" />
+				</when>
+				<otherwise >
+					<raise-error doc:name="Raise error" doc:id="d8ba2ffc-219c-4b19-88d0-55390d39a1c0" type="CUSTOM:NO_RECORD_FOUND" description="No record found"/>
+				</otherwise>
+			</choice>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7f5e8133-270d-40fe-b666-b8c8e2ec490e" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Delete Error Payload" doc:id="ec00c280-577d-4f57-b152-f39a1e69da23" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="Get_Sub_Flow_MySQL" doc:id="0c26a830-c713-4f05-9355-9758859d292d" >
+		<try doc:name="Try" doc:id="7a155862-a9c6-4f37-a384-feaef930a2e7" >
+			<db:select doc:name="Select" doc:id="65d21266-3282-404f-a31f-c16be67f0788" config-ref="Database_Config">
+			<db:sql>SELECT * FROM CurrencyConverter WHERE s_no = :s_no</db:sql>
+			<db:input-parameters><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	s_no: payload.s_no as Number
+}]]]></db:input-parameters>
+		</db:select>
+			<choice doc:name="Choice" doc:id="0b52402c-a29e-47f2-a36a-3aab4df39926" >
+				<when expression="#[isEmpty(payload) == false]">
+					<set-payload value="#[%dw 2.0
+output application/json
+---
+payload]" doc:name="Get Payload Output" doc:id="61064a7c-b722-4964-8064-a31eb8f4ea89" />
+				</when>
+				<otherwise >
+					<raise-error doc:name="Raise error" doc:id="7f6f76dd-52dc-4a2b-9f5e-08424c2cd624" type="CUSTOM:NO_RECORD_FOUND" description="No record found" />
+				</otherwise>
+			</choice>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0de13e58-87a8-42d9-aaf2-38dfbfdacbb6" type="ANY">
+					<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"description": error.description,
+	"errormessage": error.errorMessage
+}]' doc:name="Get Error Payload" doc:id="d9cc6a38-6526-4f98-9f24-b33ceb064fe6" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+</mule>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="Get_Sub_Flow" doc:id="1211529b-61e5-4f0b-b5b6-c5e67771d49f" >
+		<flow-ref doc:name="Flow Reference" doc:id="e3a4b286-a5ee-4550-b74d-d0b1fc5593c2" name="Get_Sub_Flow_MySQL"/>
+	</sub-flow>
+	<sub-flow name="Get_Sub_Flow_With_DB" doc:id="aea8d21c-22a3-4366-9600-00f8dd0238e9" >
+		<choice doc:name="Choice" doc:id="7025bcf3-0576-4ff5-995b-4fad2699b2bb" >
+			<when expression='#[payload.dbtype == "mongo"]'>
+				<flow-ref doc:name="Get Mongo Data" doc:id="006f99b4-9970-4782-914a-211d137c86b4" name="Get_Mongo_Sub_Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Get MySQL Data" doc:id="8c562f49-7362-40ce-a1a7-7f9f78d969d2" name="Get_Sub_Flow_MySQL"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="MOCK_DATA" format="csv">
+      <types:shape format="weave" example="examples/MOCK_DATA.csv"><![CDATA[%dw 2.0
+
+type MOCK_DATA = Array<{|  id: String,   first_name: String,   last_name: String,   email: String,   gender: String,   ip_address: String|}>
+
+]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="true"/>
+        <types:property name="isQuotedString" value="false"/>
+        <types:property name="separator" value=","/>
+      </types:properties>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#818e56a5-041e-4747-befc-92f32ffe0d1b">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="MOCK_DATA"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#900bbd9f-95c6-4ae7-96c1-48bb5a549796">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="MOCK_DATA"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="MOCK_DATA"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

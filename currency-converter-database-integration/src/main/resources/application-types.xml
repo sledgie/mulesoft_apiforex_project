@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="outputpayload" format="json">
+      <types:shape format="weave" example="examples/currencyconvereterdatabaseoutputschema.json"><![CDATA[%dw 2.0
+
+type outputpayload = {|
+  result: Array<{|    s_no: Number {"typeId": "int"},     source: String,     target: String,     conversion_rate: Number {"typeId": "double"},     date_created: String,     date_modified: String  |}>
+|} {"example": "{\"result\":[{\"s_no\":1,\"source\":\"CAD\",\"target\":\"PHP\",\"conversion_rate\":38.94,\"date_created\":\"2019-12-09 00:00:00\",\"date_modified\":\"2019-12-09 00:00:00\"},{\"s_no\":2,\"source\":\"CAD\",\"target\":\"INR\",\"conversion_rate\":45.94,\"date_created\":\"2019-12-09 00:00:00\",\"date_modified\":\"2019-12-09 00:00:00\"}]}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#1c317c1d-6f3d-4b0a-a80f-9c6ea375f14e">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="outputpayload"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

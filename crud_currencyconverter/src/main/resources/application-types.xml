@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Insert_Payload" format="json">
+      <types:shape format="weave" example="examples/crud_insert_payload.json"><![CDATA[%dw 2.0
+
+type Insert_Payload = {|
+  source: String, 
+  target: String, 
+  conversionrate: Number {"typeId": "double"}
+|} {"example": "{\"source\":\"EUR\",\"target\":\"PHP\",\"conversionrate\":51.25}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="Insert_Payload_Output" format="json">
+      <types:shape format="weave" example="examples/crud_insert_payload_output.json"><![CDATA[%dw 2.0
+
+type Insert_Payload_Output = {|
+  code: Number {"typeId": "int"}, 
+  message: String, 
+  datetime: String
+|} {"example": "{\"code\":201,\"message\":\"Created\",\"datetime\":\"2019-12-18T10:03:25\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="httpattributes" format="java">
+      <types:shape format="java" element="org.mule.extension.http.api.HttpRequestAttributes"/>
+    </types:type>
+    <types:type name="mongo_get_output" format="json">
+      <types:shape format="weave" example="examples/get_mongo_payload.json"><![CDATA[%dw 2.0
+
+type mongo_get_output = {|
+  date_modified: String, 
+  date_created: String, 
+  s_no: Number {"typeId": "int"}, 
+  source: String, 
+  conversion_rate: Number {"typeId": "double"}, 
+  target: String
+|} {"example": "{\"date_modified\":\"2019-12-19T15:52:25\",\"date_created\":\"2019-12-19T15:52:25\",\"s_no\":1,\"source\":\"PHP\",\"conversion_rate\":55.28,\"target\":\"CAD\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#0add4731-b791-4b2f-88ef-8fd415fa8809">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="httpattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#f91ad56f-a03e-4af6-b7aa-e978b409b523">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="httpattributes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#cb32e2e9-8680-41ff-94a7-15352532d801"/>
+  <types:enrichment select="#98ccd81b-d219-42a7-b5c1-d691ad25aaaa">
+    <types:operation-declaration>
+      <types:inputs>
+        <types:parameter name="value" type="mongo_get_output"/>
+      </types:inputs>
+    </types:operation-declaration>
+  </types:enrichment>
+</types:mule>

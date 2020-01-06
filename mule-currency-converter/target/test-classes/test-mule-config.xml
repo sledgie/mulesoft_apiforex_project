@@ -1,0 +1,19 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:currency-converter="http://www.mulesoft.org/schema/mule/currency-converter"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+          http://www.mulesoft.org/schema/mule/currency-converter http://www.mulesoft.org/schema/mule/currency-converter/current/mule-currency-converter.xsd">
+
+    <currency-converter:config name="config" configId="configId">
+        <currency-converter:connection requiredParameter="aValue" />
+    </currency-converter:config>
+
+    <flow name="sayHiFlow">
+        <currency-converter:say-hi person="Mariano Gonzalez"/>
+    </flow>
+
+    <flow name="retrieveInfoFlow">
+        <currency-converter:retrieve-info config-ref="config"/>
+    </flow>
+
+</mule>

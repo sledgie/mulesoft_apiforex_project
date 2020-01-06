@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="Update_Process_Sub_Flow" doc:id="c7549b67-7c7b-4884-9dc9-59badb89b264" >
+		<choice doc:name="Choice" doc:id="c7d317c2-5377-4f04-8d16-e6a99dc8ec89" >
+			<when expression='#[payload.dbtype == "mongo"]'>
+				<flow-ref doc:name="Update Mongo DB document" doc:id="04b2c33a-aa2b-41b6-b758-e0f73a049a7b" name="Update_Mongo_Sub_Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Update MySQL Record" doc:id="8b632b78-4133-4f17-9812-f2faf7d0e121" name="Update_Sub_Flow"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

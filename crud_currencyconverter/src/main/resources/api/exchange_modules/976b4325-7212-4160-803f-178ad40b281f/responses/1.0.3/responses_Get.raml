@@ -1,0 +1,16 @@
+#%RAML 1.0 Trait
+usage: Responses_Get
+responses:
+  200:
+    body:
+      application/json:
+        example: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/examples/1.0.1/Success/GetSingleRate.raml
+  400:
+    body:
+      application/json:
+        example: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/examples/1.0.1/Errors/error_400.raml
+  500:
+    body:
+      application/json:
+        example: !include /exchange_modules/976b4325-7212-4160-803f-178ad40b281f/examples/1.0.1/Errors/error_500.raml
+          

@@ -1,0 +1,19 @@
+{
+	"result": [{
+			"s_no": 1,
+			"source": "CAD",
+			"target": "PHP",
+			"conversion_rate": 38.94,
+			"date_created": "2019-12-09 00:00:00",
+			"date_modified": "2019-12-09 00:00:00"
+		},
+		{
+			"s_no": 2,
+			"source": "CAD",
+			"target": "INR",
+			"conversion_rate": 45.94,
+			"date_created": "2019-12-09 00:00:00",
+			"date_modified": "2019-12-09 00:00:00"
+		}
+	]
+}

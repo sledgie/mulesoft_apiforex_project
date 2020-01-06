@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:scope-logger="http://www.mulesoft.org/schema/mule/scope-logger" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/scope-logger http://www.mulesoft.org/schema/mule/scope-logger/current/mule-scope-logger.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1400f46e-77dc-4a51-9315-371a063ce8a0" >
+		<db:my-sql-connection host="db4free.net" port="3306" user="itechtions" password="itechtions" database="itechtions" />
+	</db:config>
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="4baa2c84-6919-4880-bde4-88e91afe8a3a" >
+		<mongo:connection-string-connection connectionString="mongodb+srv://itechtions:itechtions@cluster0-xdvrz.mongodb.net/CurrencyConverter" />
+	</mongo:config>
+	<flow name="database-integration" doc:id="bc723a9e-0974-4b79-af42-22d19e622b7f" maxConcurrency="5">
+		<scheduler doc:name="Scheduler" doc:id="7b7bfd3e-0ede-4a50-beab-41740ae712f7" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="5" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<scope-logger:log-scope doc:name="Log scope" doc:id="1c317c1d-6f3d-4b0a-a80f-9c6ea375f14e" correlationID="#[uuid()]" projectName="currency-converter-database-integration">
+			<http:request method="GET" doc:name="Request" doc:id="92fcbdc4-f5d2-4e8f-a598-b27da8688170" url="https://api.ratesapi.io/api/latest"/>
+			<ee:transform doc:name="Transform Message" doc:id="c4e38774-c92b-48af-b973-d7fad558ae55" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"ResultSet":
+"Result":payload.rates pluck((value, key, index)->{		
+			"baseCategory": payload.base,
+			"targetCategory": key,
+			"conversionrate": value,
+			"date": payload.date		
+	})
+]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+				</ee:variables>
+			</ee:transform>
+			<set-variable value="#[now().minutes as Number]" doc:name="Get Timestamp" doc:id="a6ef32c1-fac8-4cfb-9173-60139c0085dd" variableName="currentTimestamp"/>
+			<choice doc:name="Choice" doc:id="1eac2d5b-0a6c-4d6a-9a4a-c5ceb689cf54" >
+				<when expression="#[((vars.currentTimestamp as Number default 0) mod 2) == 0 or ((vars.currentTimestamp as Number default 0) mod 2) == 1]">
+					<foreach doc:name="For Each" doc:id="0e3b4e74-a863-434a-a43d-4673a46ae1b1" collection="#[payload.ResultSet.Result]">
+						<db:insert doc:name="Insert RDBMS" doc:id="149ddc54-ceff-4ab6-8003-7850ed5e56b3" config-ref="Database_Config">
+						<db:sql>INSERT INTO CurrencyConverter(source, target, conversion_rate, date_created, date_modified) VALUES(:source, :target, :conversion_rate, :date_created, null)</db:sql>
+						<db:input-parameters><![CDATA[#[{	
+	"source": payload.baseCategory,
+	"target": payload.targetCategory,
+	"conversion_rate": payload.conversionrate as Number,
+	"date_created": now() as String{format:"yyyy-MM-dd'T'HH:mm:ss"}
+}]]]></db:input-parameters>
+					</db:insert>
+						<logger level="INFO" doc:name="Logger" doc:id="3792a6ca-ffea-4d3e-8992-f9213a62d0ca" message='#["Rate Record has been inserted into RDBMS"]' />
+					</foreach>
+				</when>
+				<otherwise >
+					<foreach doc:name="For Each" doc:id="82ec11aa-59c0-4755-aa03-949f6e890dc4" collection="#[payload.ResultSet.Result]">
+						<mongo:insert-document doc:name="Insert document" doc:id="3294b9d0-62d1-4adb-b48a-569d9df784ea" config-ref="MongoDB_Config" collectionName="Rates">
+							<mongo:document ><![CDATA[#[{
+	"source": payload.baseCategory as String default "ERR",
+	"target": payload.targetCategory as String default "ERR",
+	"conversion_rate":payload.conversionrate as Number default 0,
+	"date_created": now() as String{format: "YYYY-MM-dd HH:mm:ss"}
+}]]]></mongo:document>
+					</mongo:insert-document>
+						<logger level="INFO" doc:name="Logger" doc:id="83612ca7-b6e6-466d-b17d-d42351bcd055" message='#["Rate Document has been inserted into No-SQL Database"]' />
+					</foreach>
+				</otherwise>
+			</choice>
+		</scope-logger:log-scope>
+	</flow>
+</mule>

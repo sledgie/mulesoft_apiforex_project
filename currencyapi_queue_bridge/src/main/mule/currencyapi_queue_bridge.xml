@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:oauth="http://www.mulesoft.org/schema/mule/oauth"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/oauth http://www.mulesoft.org/schema/mule/oauth/current/mule-oauth.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="c9370134-38b5-4561-a3c6-efe8c1e27081" >
+		<jms:generic-connection specification="JMS_1_0_2b" username="admin" >
+			<jms:connection-factory >
+				<jms:jndi-connection-factory connectionFactoryJndiName="QueueConnectionFactory" >
+					<jms:name-resolver-builder jndiInitialContextFactory="com.tibco.tibjms.naming.TibjmsInitialContextFactory" jndiProviderUrl="tcp://192.168.7.242:7222" />
+				</jms:jndi-connection-factory>
+			</jms:connection-factory>
+		</jms:generic-connection>
+	</jms:config>
+	<flow name="currencyapi_queue_bridgeFlow" doc:id="0d54ec19-b58d-4eb5-a246-b243abfc3d3f" >
+		<http:listener doc:name="Listener" doc:id="fa15608c-e28b-481d-9830-b84c6d9d431b" path="/queue" config-ref="shared_resource_HTTP"/>
+		<set-variable value='#[["CAD", "EUR", "USD"]]' doc:name="Currency List" doc:id="b56a82d3-ca3e-4dfc-b11a-d8178e8a4896" variableName="currencyList"/>
+		<try doc:name="Try" doc:id="c24a7980-c928-4806-891a-ced38e5990a9" >
+			<foreach doc:name="For Each" doc:id="24b19347-e038-4720-a7e6-3d975cbd1842" collection="#[vars.currencyList]" counterVariableName="currency">
+			<http:request method="GET" doc:name="Get Converters" doc:id="d7ec7841-1d06-429a-9b82-43973420454f" url="http://localhost:8081/api/currencyconversion">
+				<http:query-params><![CDATA[#[output application/java
+---
+{
+	"baseCcy" : payload
+}]]]></http:query-params>
+			</http:request>
+			<foreach doc:name="For Each" doc:id="481577fe-de66-4dbb-9e8a-7176e418d197" collection="#[payload.ResultSet.Result]" counterVariableName="result">
+				<ee:transform doc:name="Transform Message" doc:id="2c522fc9-a379-49e8-975b-439e7bcbd68b">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="transformedPayload"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	baseCcy: payload.baseCategory,
+	targetCcy: payload.targetCategory,
+	conversionRate: payload.conversionrate
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<jms:publish doc:name="Publish" doc:id="010ff581-e6e4-423d-94ad-1a5d151ddd5a" config-ref="JMS_Config" destination="currency.in.queue" timeToLive="1" timeToLiveUnit="MINUTES">
+			<jms:message>
+				<jms:body><![CDATA[#[vars.transformedPayload]]]></jms:body>
+			</jms:message>
+		</jms:publish>
+			</foreach>
+			<logger level="INFO" doc:name="Logger" doc:id="ff735889-554c-4453-b67d-6bd3e94bc726" message="#[payload]" />
+		</foreach>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="451b9cec-9978-4149-8163-aa6683437f60" type="ANY">
+					<logger level="INFO" doc:name="Log Error and Continue Process" doc:id="ede7380a-f1a2-472a-af99-c20dface20cd" message='#[%dw 2.0
+output application/json
+---
+{
+	"error": error.errorType,
+	"errordescription": error.detailedDescription,
+	"errormessage": error.errorMessage
+}]'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="currencyapi_queue_bridgeFlow1" doc:id="85d04047-f709-4c31-90ca-d0ecf8f2f711" maxConcurrency="1">
+		<jms:listener doc:name="Listener" doc:id="2f32eb0a-1778-4ad2-b6c6-5d22623f7873" config-ref="JMS_Config" destination="currency.out.queue" ackMode="AUTO">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<try doc:name="Try" doc:id="c681bee8-faa3-4c86-a0ee-bb2b91765d21" >
+			<until-successful maxRetries="5" doc:name="Until Successful" doc:id="57a39a37-4b93-4b28-a0db-318ac49286d3" >
+				<http:request method="POST" doc:name="Request" doc:id="8928953c-3649-48ca-b1f9-3b408c9f29d9" url="http://localhost:8081/api/crud/currencyapi/sys/base/{base}/target/{target}/rate/{rate}" responseTimeout="60000">
+			<http:uri-params><![CDATA[#[output application/json
+---
+{
+	"base" : payload.baseCcy as String,
+	"target" : payload.targetCcy as String,
+	"rate" : payload.conversionRate as String
+}]]]></http:uri-params>
+		</http:request>
+			</until-successful>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="93fe7e40-d363-4c57-bf9b-51590d03d27a" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="65bb6487-96d2-4ec5-b67e-71d43917da49" message="#[error.description]"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="a4d22f9b-051b-4cc3-8816-93406fc792a7" message="#[payload]"/>
+	</flow>
+</mule>

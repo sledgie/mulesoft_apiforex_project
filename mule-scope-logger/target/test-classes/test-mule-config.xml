@@ -1,0 +1,19 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:scope-logger="http://www.mulesoft.org/schema/mule/scope-logger"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+          http://www.mulesoft.org/schema/mule/scope-logger http://www.mulesoft.org/schema/mule/scope-logger/current/mule-scope-logger.xsd">
+
+    <scope-logger:config name="config" configId="configId">
+        <scope-logger:connection requiredParameter="aValue" />
+    </scope-logger:config>
+
+    <flow name="sayHiFlow">
+        <scope-logger:say-hi person="Mariano Gonzalez"/>
+    </flow>
+
+    <flow name="retrieveInfoFlow">
+        <scope-logger:retrieve-info config-ref="config"/>
+    </flow>
+
+</mule>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="Insert_Process_Sub_Flow" doc:id="a21ca50e-fe69-4937-9320-bb0042a6f84c" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="fb38be4c-03cb-4ffc-ab86-eb5461807b47" >
+			<route >
+				<flow-ref doc:name="RDBMS" doc:id="d92f586d-920d-4349-8db5-e4c90b131d9d" name="Insert_Sub_Flow"/>
+			</route>
+			<route >
+				<flow-ref doc:name="MongoDB" doc:id="e349bc71-bc74-43a7-ae7d-36a559012138" name="Insert_Mongo_Sub_Flow"/>
+			</route>
+		</scatter-gather>
+	</sub-flow>
+</mule>

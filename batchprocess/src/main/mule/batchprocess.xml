@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<flow name="batchprocessFlow" doc:id="31a76a92-cce0-4645-bec0-9b9d21cb6c02" >
+		<scheduler doc:name="Scheduler" doc:id="818e56a5-041e-4747-befc-92f32ffe0d1b" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="DAYS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<file:read doc:name="Read" doc:id="cb2ab1b6-376b-4e0e-a8d9-9825f769d416" path="C:\Users\Abner\Downloads\MOCK_DATA.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="900bbd9f-95c6-4ae7-96c1-48bb5a549796" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv headerLineNumber = 0 , header = true , separator = ","
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	id: payload01.id,
+	first_name: payload01.first_name,
+	last_name: payload01.last_name,
+	email: payload01.email,
+	gender: payload01.gender,
+	ip_address: payload01.ip_address
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2f2f2d4d-e647-4a93-a759-95fc1e08d54b" message="#[payload]"/>
+		<batch:job jobName="batchprocessBatch_Job" doc:id="aaaf2b7e-0733-40e9-b2ba-76d11bafdafc" blockSize="10">
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="297eebcf-599d-4d30-8168-5ad1e325765c" >
+					<ee:transform doc:name="Transform Message" doc:id="d483c821-ff29-4680-b21b-3da9de472e0b" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"id": payload.id,
+	"first_name": payload.first_name,
+	"last_name": payload.last_name,
+	"email": payload.email
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="a0ce585d-0442-4518-b116-5e0a347653ee" size="10">
+						<ee:transform doc:name="Transform Message" doc:id="6ae074aa-9dbf-4b21-9ae9-f0940534b58a" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	people: payload map(data, index)->{
+		id: data.id,
+		firstname: data.first_name,
+		lastname: data.last_name,
+		email: data.email
+	}
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<file:write doc:name="Write" doc:id="2bfc4ecd-aebe-43e5-bc6a-98dcaf84bf29" path='#[("C:/Test/csv/") ++ (now() as String {format:"yyyy-MM-dd-hh-mm-ss"}) ++ (random() * 1000) ++ ".txt"]'/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="4f850daa-c634-4710-9322-c4b9c2bb0ddf" message='#["Done"]'/>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="c244490c-f2c5-4f66-8641-0d04d89805d6" />
+			</batch:on-complete>
+		</batch:job>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="00c47c0b-5b5c-4927-b644-50fc0e881c47" variableName="thePayload"/>
+	</flow>
+</mule>
